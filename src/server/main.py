@@ -1,7 +1,7 @@
 from fastapi import FastAPI, HTTPException, Query
 from pydantic import BaseModel
 
-from bab.model import LANGUAGE_CODES, MODEL_NAME, get_model_manager
+from core.model import LANGUAGE_CODES, MODEL_NAME, get_model_manager
 
 app = FastAPI(
     title="Bab API",

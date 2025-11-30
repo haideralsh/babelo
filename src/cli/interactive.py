@@ -9,14 +9,34 @@ This module provides a REPL-style interface for:
 from pathlib import Path
 
 from prompt_toolkit import PromptSession, prompt
-from prompt_toolkit.completion import WordCompleter
+from prompt_toolkit.completion import Completer, Completion
 from prompt_toolkit.history import FileHistory
 from rich.console import Console
 from rich.panel import Panel
 from rich.table import Table
 from rich.text import Text
 
-from bab.model import LANGUAGE_CODES, MODEL_NAME, get_model_manager
+from core.model import LANGUAGE_CODES, MODEL_NAME, get_model_manager
+
+
+class LanguageCompleter(Completer):
+    """Custom completer that shows 'Name (code)' but inserts only the code."""
+
+    def __init__(self, language_codes: dict[str, str]):
+        # language_codes: {name: code}
+        self.languages = [(name, code) for name, code in language_codes.items()]
+
+    def get_completions(self, document, complete_event):
+        text = document.text_before_cursor.lower()
+        for name, code in self.languages:
+            display = f"{name} ({code})"
+            # Match against name or code
+            if text in name.lower() or text in code.lower():
+                yield Completion(
+                    code,  # Insert only the code
+                    start_position=-len(document.text_before_cursor),
+                    display=display,  # Show full format in dropdown
+                )
 
 
 class InteractiveSession:
@@ -28,8 +48,8 @@ class InteractiveSession:
         self.target_lang: str | None = None
         self.manager = get_model_manager()
 
-        all_codes = list(LANGUAGE_CODES.values())
-        self.lang_completer = WordCompleter(all_codes, ignore_case=True)
+        # Custom completer: shows "Name (code)" but inserts only the code
+        self.lang_completer = LanguageCompleter(LANGUAGE_CODES)
 
         # Create a reverse mapping from code to name for display
         self.code_to_name = {v: k for k, v in LANGUAGE_CODES.items()}
@@ -55,7 +75,7 @@ class InteractiveSession:
         banner = Text()
         banner.append("╔═══╗\n", style="cyan")
         banner.append("║ ", style="cyan")
-        banner.append("B A B  T R A N S L A T O R \n", style="bold magenta")
+        banner.append("B A B \n", style="bold magenta")
         banner.append("╚═══╝", style="cyan")
 
         self.console.print()
@@ -105,7 +125,7 @@ class InteractiveSession:
     def set_source_language(self):
         """Prompt user to set source language with autocomplete."""
         self.console.print(
-            "[dim]Enter source language code (Tab for autocomplete):[/dim]",
+            "[dim]Enter source language (Tab for autocomplete):[/dim]",
             markup=True,
         )
         try:
@@ -133,7 +153,7 @@ class InteractiveSession:
     def set_target_language(self):
         """Prompt user to set target language with autocomplete."""
         self.console.print(
-            "[dim]Enter target language code (Tab for autocomplete):[/dim]",
+            "[dim]Enter target language (Tab for autocomplete):[/dim]",
             markup=True,
         )
         try:

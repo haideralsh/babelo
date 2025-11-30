@@ -8,10 +8,12 @@ This module provides command-line utilities for:
 
 import argparse
 import logging
+import os
+import subprocess
 import sys
 import time
 
-from bab.model import LANGUAGE_CODES, MODEL_NAME, get_model_manager
+from core.model import LANGUAGE_CODES, MODEL_NAME, get_model_manager
 
 
 def setup_logging(verbose: bool = False) -> None:
