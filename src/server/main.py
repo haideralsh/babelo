@@ -1,4 +1,5 @@
 from fastapi import FastAPI, HTTPException, Query
+from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 
 from core.model import LANGUAGE_CODES, MODEL_NAME, get_model_manager
@@ -7,6 +8,15 @@ app = FastAPI(
     title="Bab API",
     description="A FastAPI backend service",
     version="0.1.0",
+)
+
+# Configure CORS to allow the frontend to make requests
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["http://localhost:5173", "http://localhost:3000"],  # Vite default port and common React port
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
 )
 
 
@@ -140,16 +150,13 @@ async def model_download(
 
 
 @app.get("/languages")
-async def list_languages() -> dict[str, list[str] | dict[str, str]]:
+async def list_languages() -> dict[str, dict[str, str]]:
     """List all supported languages.
 
-    Returns a list of language codes and a mapping of language names to their NLLB codes.
+    Returns a mapping of language names to their NLLB codes.
     """
 
-    return {
-        "language_codes": sorted(LANGUAGE_CODES.values()),
-        "name_to_code": LANGUAGE_CODES,
-    }
+    return {"languages": {name: code for name, code in sorted(LANGUAGE_CODES.items())}}
 
 
 @app.post("/translate", response_model=TranslateResponse)
