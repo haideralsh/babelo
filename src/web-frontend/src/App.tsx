@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import { Textarea } from "./components/ui/textarea";
 import { Badge } from "./components/ui/badge";
 import { LanguageSelector, type Language } from "./components/LanguageSelector";
+import { OnboardingScreen } from "./components/OnboardingScreen";
 
 interface HistoryItemData {
   id: string;
@@ -361,7 +362,22 @@ function HistoryItem({
   );
 }
 
-function App() {
+// Loading spinner for checking state
+function LoadingScreen() {
+  return (
+    <div className="min-h-screen flex items-center justify-center bg-zinc-50 dark:bg-zinc-950">
+      <div className="text-center">
+        <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-blue-500/10 dark:bg-blue-500/20 mb-4">
+          <LanguagesIcon className="w-8 h-8 text-blue-600 dark:text-blue-400 animate-pulse" />
+        </div>
+        <p className="text-zinc-500 dark:text-zinc-400">Loading...</p>
+      </div>
+    </div>
+  );
+}
+
+// Main translator app UI
+function TranslatorApp() {
   const [inputText, setInputText] = useState("");
   const [translatedText, setTranslatedText] = useState("");
   const [languages, setLanguages] = useState<Language[]>([]);
@@ -668,6 +684,52 @@ function App() {
       </div>
     </div>
   );
+}
+
+type AppState = "checking" | "onboarding" | "ready";
+
+function App() {
+  const [appState, setAppState] = useState<AppState>("checking");
+
+  // Check model status on mount
+  useEffect(() => {
+    const checkModelStatus = async () => {
+      try {
+        const response = await fetch(`${API_BASE_URL}/model/status`);
+        if (!response.ok) {
+          // If we can't reach the server, show onboarding anyway
+          setAppState("onboarding");
+          return;
+        }
+
+        const data = await response.json();
+        if (data.is_downloaded) {
+          setAppState("ready");
+        } else {
+          setAppState("onboarding");
+        }
+      } catch {
+        // If server is unreachable, show onboarding (will show error on download attempt)
+        setAppState("onboarding");
+      }
+    };
+
+    checkModelStatus();
+  }, []);
+
+  const handleOnboardingComplete = () => {
+    setAppState("ready");
+  };
+
+  if (appState === "checking") {
+    return <LoadingScreen />;
+  }
+
+  if (appState === "onboarding") {
+    return <OnboardingScreen onComplete={handleOnboardingComplete} />;
+  }
+
+  return <TranslatorApp />;
 }
 
 export default App;
