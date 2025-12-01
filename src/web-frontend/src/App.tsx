@@ -196,7 +196,6 @@ const VolumeIcon = ({ className }: { className?: string }) => (
   </svg>
 );
 
-// Translation Panel Component
 function TranslationPanel({
   value,
   onChange,

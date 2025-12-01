@@ -30,7 +30,7 @@ export function LanguageSelector({
       <Combobox
         options={languages}
         value={selectedLanguage}
-        onChange={(lang) => {
+        onChange={(lang: Language) => {
           if (lang) onChange(lang.code);
         }}
         displayValue={(lang) => lang?.name}
@@ -47,4 +47,3 @@ export function LanguageSelector({
     </div>
   );
 }
-
