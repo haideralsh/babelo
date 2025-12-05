@@ -3,6 +3,8 @@ import { Textarea } from "./components/ui/textarea";
 import { Badge } from "./components/ui/badge";
 import { LanguageSelector, type Language } from "./components/LanguageSelector";
 import { OnboardingScreen } from "./components/OnboardingScreen";
+import { VoiceSelector } from "./components/VoiceSelector";
+import { useSpeechSynthesis, type Voice } from "./hooks/useSpeechSynthesis";
 
 interface HistoryItemData {
   id: string;
@@ -197,6 +199,20 @@ const VolumeIcon = ({ className }: { className?: string }) => (
   </svg>
 );
 
+const StopIcon = ({ className }: { className?: string }) => (
+  <svg
+    className={className}
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+  >
+    <rect x="6" y="6" width="12" height="12" rx="2" />
+  </svg>
+);
+
 function TranslationPanel({
   value,
   onChange,
@@ -205,6 +221,13 @@ function TranslationPanel({
   readOnly = false,
   language,
   loading = false,
+  availableVoices,
+  selectedVoice,
+  onVoiceChange,
+  onSpeak,
+  onStop,
+  speaking = false,
+  ttsSupported = false,
 }: {
   value: string;
   onChange?: (value: string) => void;
@@ -213,6 +236,13 @@ function TranslationPanel({
   readOnly?: boolean;
   language: string;
   loading?: boolean;
+  availableVoices: Voice[];
+  selectedVoice: SpeechSynthesisVoice | null;
+  onVoiceChange: (voice: SpeechSynthesisVoice | null) => void;
+  onSpeak: () => void;
+  onStop: () => void;
+  speaking?: boolean;
+  ttsSupported?: boolean;
 }) {
   const [copied, setCopied] = useState(false);
 
@@ -221,12 +251,6 @@ function TranslationPanel({
     await navigator.clipboard.writeText(value);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
-  };
-
-  const handleSpeak = () => {
-    if (!value) return;
-    const utterance = new SpeechSynthesisUtterance(value);
-    speechSynthesis.speak(utterance);
   };
 
   const characterCount = value.length;
@@ -263,16 +287,41 @@ function TranslationPanel({
 
       {/* Actions Bar */}
       <div className="flex items-center justify-between px-4 py-2 border-t border-zinc-200 dark:border-zinc-700 bg-zinc-50/50 dark:bg-zinc-800/30">
-        <div className="flex items-center gap-1">
-          <button
-            type="button"
-            onClick={handleSpeak}
-            disabled={!value}
-            className="h-8 w-8 p-0 inline-flex items-center justify-center rounded-lg text-zinc-500 hover:text-zinc-900 hover:bg-zinc-100 dark:text-zinc-400 dark:hover:text-white dark:hover:bg-zinc-700 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
-            aria-label="Listen"
-          >
-            <VolumeIcon className="w-4 h-4" />
-          </button>
+        <div className="flex items-center gap-2">
+          {ttsSupported && (
+            <>
+              <div className="w-40">
+                <VoiceSelector
+                  voices={availableVoices}
+                  selectedVoice={selectedVoice}
+                  onVoiceChange={onVoiceChange}
+                  disabled={!value || speaking}
+                />
+              </div>
+              <button
+                type="button"
+                onClick={speaking ? onStop : onSpeak}
+                disabled={!value || availableVoices.length === 0}
+                className={`h-8 w-8 p-0 inline-flex items-center justify-center rounded-lg transition-colors disabled:opacity-30 disabled:cursor-not-allowed ${
+                  speaking
+                    ? "text-red-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20"
+                    : "text-zinc-500 hover:text-zinc-900 hover:bg-zinc-100 dark:text-zinc-400 dark:hover:text-white dark:hover:bg-zinc-700"
+                }`}
+                aria-label={speaking ? "Stop" : "Listen"}
+              >
+                {speaking ? (
+                  <StopIcon className="w-4 h-4" />
+                ) : (
+                  <VolumeIcon className="w-4 h-4" />
+                )}
+              </button>
+            </>
+          )}
+          {!ttsSupported && (
+            <span className="text-xs text-zinc-400 dark:text-zinc-500 italic">
+              TTS not available for this language
+            </span>
+          )}
           <button
             type="button"
             onClick={handleCopy}
@@ -387,6 +436,43 @@ function TranslatorApp() {
   const [error, setError] = useState("");
   const [history, setHistory] = useState<HistoryItemData[]>([]);
   const abortControllerRef = useRef<AbortController | null>(null);
+
+  const { speak, stop, speaking, getVoicesForLanguage, isLanguageSupported } =
+    useSpeechSynthesis();
+
+  const [sourceVoice, setSourceVoice] = useState<SpeechSynthesisVoice | null>(
+    null
+  );
+  const [targetVoice, setTargetVoice] = useState<SpeechSynthesisVoice | null>(
+    null
+  );
+
+  const sourceVoices = getVoicesForLanguage(sourceLanguage);
+  const targetVoices = getVoicesForLanguage(targetLanguage);
+  const sourceTtsSupported = isLanguageSupported(sourceLanguage);
+  const targetTtsSupported = isLanguageSupported(targetLanguage);
+
+  useEffect(() => {
+    if (sourceVoices.length > 0 && !sourceVoice) {
+      setSourceVoice(sourceVoices[0].voice);
+    } else if (
+      sourceVoice &&
+      !sourceVoices.some((v) => v.voice.name === sourceVoice.name)
+    ) {
+      setSourceVoice(sourceVoices[0]?.voice ?? null);
+    }
+  }, [sourceVoices, sourceVoice]);
+
+  useEffect(() => {
+    if (targetVoices.length > 0 && !targetVoice) {
+      setTargetVoice(targetVoices[0].voice);
+    } else if (
+      targetVoice &&
+      !targetVoices.some((v) => v.voice.name === targetVoice.name)
+    ) {
+      setTargetVoice(targetVoices[0]?.voice ?? null);
+    }
+  }, [targetVoices, targetVoice]);
 
   // Wrapper setters that persist to localStorage
   const setSourceLanguage = (code: string) => {
@@ -614,6 +700,13 @@ function TranslatorApp() {
             placeholder="Enter text to translate..."
             isSource
             language={getLanguageName(sourceLanguage)}
+            availableVoices={sourceVoices}
+            selectedVoice={sourceVoice}
+            onVoiceChange={setSourceVoice}
+            onSpeak={() => speak(inputText, sourceVoice ?? undefined)}
+            onStop={stop}
+            speaking={speaking}
+            ttsSupported={sourceTtsSupported}
           />
 
           <TranslationPanel
@@ -622,6 +715,13 @@ function TranslatorApp() {
             readOnly
             language={getLanguageName(targetLanguage)}
             loading={loading}
+            availableVoices={targetVoices}
+            selectedVoice={targetVoice}
+            onVoiceChange={setTargetVoice}
+            onSpeak={() => speak(translatedText, targetVoice ?? undefined)}
+            onStop={stop}
+            speaking={speaking}
+            ttsSupported={targetTtsSupported}
           />
         </div>
 

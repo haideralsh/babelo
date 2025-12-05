@@ -29,8 +29,8 @@ export function LanguageSelector({
       </span>
       <Combobox
         options={languages}
-        value={selectedLanguage}
-        onChange={(lang: Language) => {
+        value={selectedLanguage ?? undefined}
+        onChange={(lang: Language | null) => {
           if (lang) onChange(lang.code);
         }}
         displayValue={(lang) => lang?.name}
