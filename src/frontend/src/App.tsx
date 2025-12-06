@@ -5,6 +5,13 @@ import { LanguageSelector, type Language } from "./components/LanguageSelector";
 import { OnboardingScreen } from "./components/OnboardingScreen";
 import { VoiceSelector } from "./components/VoiceSelector";
 import { useSpeechSynthesis, type Voice } from "./hooks/useSpeechSynthesis";
+import {
+  Alert,
+  AlertTitle,
+  AlertDescription,
+  AlertActions,
+} from "./components/ui/alert";
+import { Button } from "./components/ui/button";
 
 interface HistoryItemData {
   id: string;
@@ -12,7 +19,7 @@ interface HistoryItemData {
   translatedText: string;
   sourceLang: string;
   targetLang: string;
-  timestamp: Date;
+  timestamp: string; // ISO 8601 format from server
 }
 
 const API_BASE_URL = "http://localhost:8000";
@@ -281,7 +288,8 @@ function TranslationPanel({
           placeholder={placeholder}
           disabled={readOnly}
           resizable={false}
-          className="min-h-[180px] border-0 rounded-none bg-transparent focus:ring-0 text-base leading-relaxed"
+          rows={8}
+          className="border-0 rounded-none"
         />
       </div>
 
@@ -358,7 +366,8 @@ function HistoryItem({
   onClick: () => void;
   onDelete: () => void;
 }) {
-  const formatTime = (date: Date) => {
+  const formatTime = (timestamp: string) => {
+    const date = new Date(timestamp);
     const now = new Date();
     const diff = now.getTime() - date.getTime();
     const minutes = Math.floor(diff / 60000);
@@ -435,44 +444,131 @@ function TranslatorApp() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [history, setHistory] = useState<HistoryItemData[]>([]);
+  const [showClearConfirm, setShowClearConfirm] = useState(false);
   const abortControllerRef = useRef<AbortController | null>(null);
 
   const { speak, stop, speaking, getVoicesForLanguage, isLanguageSupported } =
     useSpeechSynthesis();
 
-  const [sourceVoice, setSourceVoice] = useState<SpeechSynthesisVoice | null>(
-    null
-  );
-  const [targetVoice, setTargetVoice] = useState<SpeechSynthesisVoice | null>(
-    null
-  );
+  // Track which panel is currently speaking
+  const [speakingPanel, setSpeakingPanel] = useState<
+    "source" | "target" | null
+  >(null);
+
+  // Reset speakingPanel when speech stops
+  useEffect(() => {
+    if (!speaking) {
+      setSpeakingPanel(null);
+    }
+  }, [speaking]);
+
+  const [sourceVoice, setSourceVoiceState] =
+    useState<SpeechSynthesisVoice | null>(null);
+  const [targetVoice, setTargetVoiceState] =
+    useState<SpeechSynthesisVoice | null>(null);
 
   const sourceVoices = getVoicesForLanguage(sourceLanguage);
   const targetVoices = getVoicesForLanguage(targetLanguage);
   const sourceTtsSupported = isLanguageSupported(sourceLanguage);
   const targetTtsSupported = isLanguageSupported(targetLanguage);
 
-  useEffect(() => {
-    if (sourceVoices.length > 0 && !sourceVoice) {
-      setSourceVoice(sourceVoices[0].voice);
-    } else if (
-      sourceVoice &&
-      !sourceVoices.some((v) => v.voice.name === sourceVoice.name)
-    ) {
-      setSourceVoice(sourceVoices[0]?.voice ?? null);
+  // Helper functions for voice preference API
+  const saveVoicePreference = async (langCode: string, voiceName: string) => {
+    try {
+      await fetch(`${API_BASE_URL}/preferences/voice_preference:${langCode}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ value: voiceName }),
+      });
+    } catch (err) {
+      console.error("Error saving voice preference:", err);
     }
-  }, [sourceVoices, sourceVoice]);
+  };
 
-  useEffect(() => {
-    if (targetVoices.length > 0 && !targetVoice) {
-      setTargetVoice(targetVoices[0].voice);
-    } else if (
-      targetVoice &&
-      !targetVoices.some((v) => v.voice.name === targetVoice.name)
-    ) {
-      setTargetVoice(targetVoices[0]?.voice ?? null);
+  const loadVoicePreference = async (
+    langCode: string
+  ): Promise<string | null> => {
+    try {
+      const response = await fetch(
+        `${API_BASE_URL}/preferences/voice_preference:${langCode}`
+      );
+      if (response.ok) {
+        const data = await response.json();
+        return data.value;
+      }
+    } catch (err) {
+      // Preference not found or error - will use default voice
     }
-  }, [targetVoices, targetVoice]);
+    return null;
+  };
+
+  // Wrapper setters that save voice preference to database
+  const setSourceVoice = (voice: SpeechSynthesisVoice | null) => {
+    setSourceVoiceState(voice);
+    if (voice && sourceLanguage) {
+      saveVoicePreference(sourceLanguage, voice.name);
+    }
+  };
+
+  const setTargetVoice = (voice: SpeechSynthesisVoice | null) => {
+    setTargetVoiceState(voice);
+    if (voice && targetLanguage) {
+      saveVoicePreference(targetLanguage, voice.name);
+    }
+  };
+
+  // Load saved voice preference when source language changes
+  useEffect(() => {
+    if (sourceVoices.length === 0 || !sourceLanguage) return;
+
+    const loadSavedVoice = async () => {
+      const savedVoiceName = await loadVoicePreference(sourceLanguage);
+      if (savedVoiceName) {
+        const savedVoice = sourceVoices.find(
+          (v) => v.voice.name === savedVoiceName
+        );
+        if (savedVoice) {
+          setSourceVoiceState(savedVoice.voice);
+          return;
+        }
+      }
+
+      if (
+        !sourceVoice ||
+        !sourceVoices.some((v) => v.voice.name === sourceVoice.name)
+      ) {
+        setSourceVoiceState(sourceVoices[0].voice);
+      }
+    };
+
+    loadSavedVoice();
+  }, [sourceLanguage, sourceVoices]);
+
+  // Load saved voice preference when target language changes
+  useEffect(() => {
+    if (targetVoices.length === 0 || !targetLanguage) return;
+
+    const loadSavedVoice = async () => {
+      const savedVoiceName = await loadVoicePreference(targetLanguage);
+      if (savedVoiceName) {
+        const savedVoice = targetVoices.find(
+          (v) => v.voice.name === savedVoiceName
+        );
+        if (savedVoice) {
+          setTargetVoiceState(savedVoice.voice);
+          return;
+        }
+      }
+      if (
+        !targetVoice ||
+        !targetVoices.some((v) => v.voice.name === targetVoice.name)
+      ) {
+        setTargetVoiceState(targetVoices[0].voice);
+      }
+    };
+
+    loadSavedVoice();
+  }, [targetLanguage, targetVoices]);
 
   // Wrapper setters that persist to localStorage
   const setSourceLanguage = (code: string) => {
@@ -501,7 +597,6 @@ function TranslatorApp() {
 
         setLanguages(languageList);
 
-        // Set default languages: prefer stored preference, fall back to English/Spanish
         if (languageList.length > 0) {
           const storedSource = getRecentLanguages(LS_SOURCE_LANGS_KEY)[0];
           const storedTarget = getRecentLanguages(LS_TARGET_LANGS_KEY)[0];
@@ -609,27 +704,83 @@ function TranslatorApp() {
     setTranslatedText(tempText);
   };
 
-  const handleTranslate = () => {
+  // Fetch history from the API
+  const fetchHistory = async () => {
+    try {
+      const response = await fetch(`${API_BASE_URL}/history`);
+      if (!response.ok) return;
+      const data = await response.json();
+      // Map API response to HistoryItemData format
+      const items: HistoryItemData[] = data.items.map(
+        (item: {
+          id: string;
+          source_text: string;
+          translated_text: string;
+          source_lang: string;
+          target_lang: string;
+          timestamp: string;
+        }) => ({
+          id: item.id,
+          sourceText: item.source_text,
+          translatedText: item.translated_text,
+          sourceLang: item.source_lang,
+          targetLang: item.target_lang,
+          timestamp: item.timestamp,
+        })
+      );
+      setHistory(items);
+    } catch (err) {
+      console.error("Error fetching history:", err);
+    }
+  };
+
+  useEffect(() => {
+    fetchHistory();
+  }, []);
+
+  const handleTranslate = async () => {
     if (!inputText.trim() || !translatedText.trim()) return;
 
-    // Add to history
-    const newHistoryItem: HistoryItemData = {
-      id: Date.now().toString(),
-      sourceText: inputText,
-      translatedText: translatedText,
-      sourceLang: sourceLanguage,
-      targetLang: targetLanguage,
-      timestamp: new Date(),
-    };
-    setHistory([newHistoryItem, ...history]);
+    try {
+      await fetch(`${API_BASE_URL}/history`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          source_text: inputText,
+          translated_text: translatedText,
+          source_lang: sourceLanguage,
+          target_lang: targetLanguage,
+        }),
+      });
+      // Refresh the history list
+      await fetchHistory();
+    } catch (err) {
+      console.error("Error saving history:", err);
+    }
   };
 
-  const handleClearHistory = () => {
-    setHistory([]);
+  const handleClearHistory = async () => {
+    try {
+      await fetch(`${API_BASE_URL}/history`, {
+        method: "DELETE",
+      });
+      setHistory([]);
+    } catch (err) {
+      console.error("Error clearing history:", err);
+    }
   };
 
-  const handleDeleteHistoryItem = (id: string) => {
-    setHistory(history.filter((item) => item.id !== id));
+  const handleDeleteHistoryItem = async (id: string) => {
+    try {
+      await fetch(`${API_BASE_URL}/history/${id}`, {
+        method: "DELETE",
+      });
+      setHistory(history.filter((item) => item.id !== id));
+    } catch (err) {
+      console.error("Error deleting history item:", err);
+    }
   };
 
   const handleHistoryItemClick = (item: HistoryItemData) => {
@@ -703,9 +854,12 @@ function TranslatorApp() {
             availableVoices={sourceVoices}
             selectedVoice={sourceVoice}
             onVoiceChange={setSourceVoice}
-            onSpeak={() => speak(inputText, sourceVoice ?? undefined)}
+            onSpeak={() => {
+              setSpeakingPanel("source");
+              speak(inputText, sourceVoice ?? undefined);
+            }}
             onStop={stop}
-            speaking={speaking}
+            speaking={speakingPanel === "source"}
             ttsSupported={sourceTtsSupported}
           />
 
@@ -718,9 +872,12 @@ function TranslatorApp() {
             availableVoices={targetVoices}
             selectedVoice={targetVoice}
             onVoiceChange={setTargetVoice}
-            onSpeak={() => speak(translatedText, targetVoice ?? undefined)}
+            onSpeak={() => {
+              setSpeakingPanel("target");
+              speak(translatedText, targetVoice ?? undefined);
+            }}
             onStop={stop}
-            speaking={speaking}
+            speaking={speakingPanel === "target"}
             ttsSupported={targetTtsSupported}
           />
         </div>
@@ -752,7 +909,7 @@ function TranslatorApp() {
             {history.length > 0 && (
               <button
                 type="button"
-                onClick={handleClearHistory}
+                onClick={() => setShowClearConfirm(true)}
                 className="inline-flex items-center gap-1 px-3 py-1.5 text-sm text-zinc-500 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-white hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-lg transition-colors"
               >
                 <TrashIcon className="w-4 h-4" />
@@ -781,6 +938,32 @@ function TranslatorApp() {
             </div>
           )}
         </section>
+
+        {/* Clear History Confirmation Dialog */}
+        <Alert
+          open={showClearConfirm}
+          onClose={() => setShowClearConfirm(false)}
+        >
+          <AlertTitle>Clear all history?</AlertTitle>
+          <AlertDescription>
+            This will permanently delete all your translation history. This
+            action cannot be undone.
+          </AlertDescription>
+          <AlertActions>
+            <Button plain onClick={() => setShowClearConfirm(false)}>
+              Cancel
+            </Button>
+            <Button
+              color="red"
+              onClick={() => {
+                handleClearHistory();
+                setShowClearConfirm(false);
+              }}
+            >
+              Clear All
+            </Button>
+          </AlertActions>
+        </Alert>
       </div>
     </div>
   );
@@ -809,7 +992,6 @@ function App() {
           setAppState("onboarding");
         }
       } catch {
-        // If server is unreachable, show onboarding (will show error on download attempt)
         setAppState("onboarding");
       }
     };

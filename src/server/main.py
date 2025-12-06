@@ -3,6 +3,8 @@ from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 
 from core.model import LANGUAGE_CODES, MODEL_NAME, get_model_manager
+from server.routes.history import router as history_router
+from server.routes.preferences import router as preferences_router
 
 app = FastAPI(
     title="Bab API",
@@ -13,11 +15,18 @@ app = FastAPI(
 # Configure CORS to allow the frontend to make requests
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173", "http://localhost:3000"],  # Vite default port and common React port
+    allow_origins=[
+        "http://localhost:5173",
+        "http://localhost:3000",
+    ],  # Vite default port and common React port
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# Include routers
+app.include_router(history_router)
+app.include_router(preferences_router)
 
 
 class ModelStatusResponse(BaseModel):
