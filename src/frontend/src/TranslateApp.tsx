@@ -22,6 +22,7 @@ import {
   LanguagesIcon,
   ArrowRightLeftIcon,
   ClockIcon,
+  StarIcon,
 } from "./components/icons";
 
 export function TranslatorApp() {
@@ -440,23 +441,34 @@ export function TranslatorApp() {
 
           {/* Translation Panels */}
           <div className="grid md:grid-cols-2 gap-4 mb-4">
-            <TranslationPanel
-              value={inputText}
-              onChange={setInputText}
-              placeholder="Enter text to translate..."
-              isSource
-              language={getLanguageName(sourceLanguage)}
-              availableVoices={sourceVoices}
-              selectedVoice={sourceVoice}
-              onVoiceChange={setSourceVoice}
-              onSpeak={() => {
-                setSpeakingPanel("source");
-                speak(inputText, sourceVoice ?? undefined);
-              }}
-              onStop={stop}
-              speaking={speakingPanel === "source"}
-              ttsSupported={sourceTtsSupported}
-            />
+            <div className="relative">
+              <button
+                type="button"
+                onClick={handleTranslate}
+                disabled={!inputText.trim() || !translatedText.trim()}
+                className="absolute -left-10 top-2 p-2 text-amber-500 hover:text-amber-600 hover:bg-amber-50 rounded-full transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+                title="Save to History"
+              >
+                <StarIcon className="w-6 h-6" />
+              </button>
+              <TranslationPanel
+                value={inputText}
+                onChange={setInputText}
+                placeholder="Enter text to translate..."
+                isSource
+                language={getLanguageName(sourceLanguage)}
+                availableVoices={sourceVoices}
+                selectedVoice={sourceVoice}
+                onVoiceChange={setSourceVoice}
+                onSpeak={() => {
+                  setSpeakingPanel("source");
+                  speak(inputText, sourceVoice ?? undefined);
+                }}
+                onStop={stop}
+                speaking={speakingPanel === "source"}
+                ttsSupported={sourceTtsSupported}
+              />
+            </div>
 
             <TranslationPanel
               value={translatedText}
@@ -475,17 +487,6 @@ export function TranslatorApp() {
               speaking={speakingPanel === "target"}
               ttsSupported={targetTtsSupported}
             />
-          </div>
-
-          <div className="flex justify-center">
-            <button
-              type="button"
-              onClick={handleTranslate}
-              disabled={!inputText.trim() || !translatedText.trim()}
-              className="px-8 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg shadow-sm disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-            >
-              Save to History
-            </button>
           </div>
 
           <div
