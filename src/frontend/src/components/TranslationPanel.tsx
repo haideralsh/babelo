@@ -50,8 +50,8 @@ export function TranslationPanel({
 
   return (
     <div
-      className={`bg-white dark:bg-zinc-900 rounded-xl border border-zinc-200 dark:border-zinc-700 overflow-hidden flex flex-col ${
-        readOnly ? "bg-zinc-50 dark:bg-zinc-800/50" : ""
+      className={`bg-white rounded-xl border border-zinc-200 overflow-hidden flex flex-col ${
+        readOnly ? "bg-zinc-50" : ""
       }`}
     >
       {/* Text Area */}
@@ -68,7 +68,7 @@ export function TranslationPanel({
       </div>
 
       {/* Actions Bar */}
-      <div className="flex items-center justify-between px-4 py-2 border-t border-zinc-200 dark:border-zinc-700 bg-zinc-50/50 dark:bg-zinc-800/30">
+      <div className="flex items-center justify-between px-4 py-2 border-t border-zinc-200 bg-zinc-50/50">
         <div className="flex items-center gap-2">
           {ttsSupported && (
             <>
@@ -86,8 +86,8 @@ export function TranslationPanel({
                 disabled={!value || availableVoices.length === 0}
                 className={`h-8 w-8 p-0 inline-flex items-center justify-center rounded-lg transition-colors disabled:opacity-30 disabled:cursor-not-allowed ${
                   speaking
-                    ? "text-red-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20"
-                    : "text-zinc-500 hover:text-zinc-900 hover:bg-zinc-100 dark:text-zinc-400 dark:hover:text-white dark:hover:bg-zinc-700"
+                    ? "text-red-500 hover:text-red-600 hover:bg-red-50"
+                    : "text-zinc-500 hover:text-zinc-900 hover:bg-zinc-100"
                 }`}
                 aria-label={speaking ? "Stop" : "Listen"}
               >
@@ -100,7 +100,7 @@ export function TranslationPanel({
             </>
           )}
           {!ttsSupported && (
-            <span className="text-xs text-zinc-400 dark:text-zinc-500 italic">
+            <span className="text-xs text-zinc-400 italic">
               Text-to-speech not available for this language
             </span>
           )}
@@ -108,7 +108,7 @@ export function TranslationPanel({
             type="button"
             onClick={handleCopy}
             disabled={!value}
-            className="h-8 w-8 p-0 inline-flex items-center justify-center rounded-lg text-zinc-500 hover:text-zinc-900 hover:bg-zinc-100 dark:text-zinc-400 dark:hover:text-white dark:hover:bg-zinc-700 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+            className="h-8 w-8 p-0 inline-flex items-center justify-center rounded-lg text-zinc-500 hover:text-zinc-900 hover:bg-zinc-100 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
             aria-label="Copy"
           >
             {copied ? (
@@ -119,9 +119,7 @@ export function TranslationPanel({
           </button>
         </div>
         {isSource && (
-          <span className="text-xs text-zinc-500 dark:text-zinc-400">
-            {characterCount} / 5000
-          </span>
+          <span className="text-xs text-zinc-500">{characterCount} / 5000</span>
         )}
       </div>
     </div>

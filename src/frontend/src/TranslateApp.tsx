@@ -385,160 +385,167 @@ export function TranslatorApp() {
   };
 
   return (
-    <div className="min-h-screen bg-zinc-50 dark:bg-zinc-950">
-      <div className="max-w-5xl mx-auto px-4 py-8 md:py-12">
-        <header className="flex items-center gap-3 mb-8">
-          <div className="p-2 bg-blue-500/10 dark:bg-blue-500/20 rounded-xl">
-            <LanguagesIcon className="w-6 h-6 text-blue-600 dark:text-blue-400" />
-          </div>
-          <h1 className="text-2xl font-semibold text-zinc-900 dark:text-white">
-            Bab Translator
-          </h1>
-        </header>
+    <div className="flex h-screen bg-zinc-50 overflow-hidden">
+      <main className="flex-1 min-w-0 h-full overflow-y-auto">
+        <div className="max-w-5xl mx-auto px-4 py-8 md:py-12 pb-24">
+          <header className="flex items-center gap-3 mb-8">
+            <div className="p-2 bg-blue-500/10 rounded-xl">
+              <LanguagesIcon className="w-6 h-6 text-blue-600" />
+            </div>
+            <h1 className="text-2xl font-semibold text-zinc-900">
+              Bab Translator
+            </h1>
+          </header>
 
-        {error && (
-          <div className="mb-4 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg text-red-700 dark:text-red-400">
-            {error}
-          </div>
-        )}
-
-        <div className="flex items-center justify-between gap-4 mb-4">
-          <LanguageSelector
-            languages={languages}
-            value={sourceLanguage}
-            onChange={setSourceLanguage}
-            label="From"
-            disabled={loading}
-          />
-
-          <button
-            type="button"
-            onClick={() => {
-              setIsSwapRotating((r) => !r);
-              handleSwapLanguages();
-            }}
-            disabled={loading}
-            className="rounded-full p-2 text-zinc-500 dark:text-zinc-400 hover:text-blue-500 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors shrink-0 mt-5 disabled:opacity-50 disabled:cursor-not-allowed"
-            aria-label="Swap languages"
-          >
-            <ArrowRightLeftIcon
-              className={`w-5 h-5 transition-transform duration-300 ${
-                isSwapRotating ? "rotate-180" : ""
-              }`}
-            />
-          </button>
-
-          <LanguageSelector
-            languages={languages}
-            value={targetLanguage}
-            onChange={setTargetLanguage}
-            label="To"
-            disabled={loading}
-          />
-        </div>
-
-        {/* Translation Panels */}
-        <div className="grid md:grid-cols-2 gap-4 mb-4">
-          <TranslationPanel
-            value={inputText}
-            onChange={setInputText}
-            placeholder="Enter text to translate..."
-            isSource
-            language={getLanguageName(sourceLanguage)}
-            availableVoices={sourceVoices}
-            selectedVoice={sourceVoice}
-            onVoiceChange={setSourceVoice}
-            onSpeak={() => {
-              setSpeakingPanel("source");
-              speak(inputText, sourceVoice ?? undefined);
-            }}
-            onStop={stop}
-            speaking={speakingPanel === "source"}
-            ttsSupported={sourceTtsSupported}
-          />
-
-          <TranslationPanel
-            value={translatedText}
-            placeholder="Translation will appear here..."
-            readOnly
-            language={getLanguageName(targetLanguage)}
-            loading={loading}
-            availableVoices={targetVoices}
-            selectedVoice={targetVoice}
-            onVoiceChange={setTargetVoice}
-            onSpeak={() => {
-              setSpeakingPanel("target");
-              speak(translatedText, targetVoice ?? undefined);
-            }}
-            onStop={stop}
-            speaking={speakingPanel === "target"}
-            ttsSupported={targetTtsSupported}
-          />
-        </div>
-
-        {/* Translate Button (Save to History) */}
-        <div className="flex justify-center">
-          <button
-            type="button"
-            onClick={handleTranslate}
-            disabled={!inputText.trim() || !translatedText.trim()}
-            className="px-8 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg shadow-sm disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-          >
-            Save to History
-          </button>
-        </div>
-
-        {/* History Sidebar Button */}
-        <button
-          type="button"
-          onClick={() => setShowHistorySidebar(true)}
-          className="fixed bottom-6 right-6 flex items-center gap-2 px-4 py-3 bg-zinc-900 dark:bg-white text-white dark:text-zinc-900 rounded-full shadow-lg hover:shadow-xl hover:scale-105 transition-all duration-200"
-        >
-          <ClockIcon className="w-5 h-5" />
-          <span className="font-medium">History</span>
-          {history.length > 0 && (
-            <span className="flex items-center justify-center min-w-5 h-5 px-1.5 bg-blue-500 text-white text-xs font-semibold rounded-full">
-              {history.length}
-            </span>
+          {error && (
+            <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-lg text-red-700">
+              {error}
+            </div>
           )}
-        </button>
 
-        {/* History Sidebar */}
-        <HistorySidebar
-          open={showHistorySidebar}
-          onClose={() => setShowHistorySidebar(false)}
-          history={history}
-          onHistoryItemClick={handleHistoryItemClick}
-          onDeleteHistoryItem={handleDeleteHistoryItem}
-          onClearAll={() => setShowClearConfirm(true)}
-          getLanguageName={getLanguageName}
-        />
+          <div className="flex items-center justify-between gap-4 mb-4">
+            <LanguageSelector
+              languages={languages}
+              value={sourceLanguage}
+              onChange={setSourceLanguage}
+              label="From"
+              disabled={loading}
+            />
 
-        <Alert
-          open={showClearConfirm}
-          onClose={() => setShowClearConfirm(false)}
-        >
-          <AlertTitle>Clear all history?</AlertTitle>
-          <AlertDescription>
-            This will permanently delete all your translation history. This
-            action cannot be undone.
-          </AlertDescription>
-          <AlertActions>
-            <Button plain onClick={() => setShowClearConfirm(false)}>
-              Cancel
-            </Button>
-            <Button
-              color="red"
+            <button
+              type="button"
               onClick={() => {
-                handleClearHistory();
-                setShowClearConfirm(false);
+                setIsSwapRotating((r) => !r);
+                handleSwapLanguages();
               }}
+              disabled={loading}
+              className="rounded-full p-2 text-zinc-500 hover:text-blue-500 hover:bg-blue-500/20 transition-colors shrink-0 mt-5 disabled:opacity-50 disabled:cursor-not-allowed"
+              aria-label="Swap languages"
             >
-              Clear All
-            </Button>
-          </AlertActions>
-        </Alert>
-      </div>
+              <ArrowRightLeftIcon
+                className={`w-5 h-5 transition-transform duration-300 ${
+                  isSwapRotating ? "rotate-180" : ""
+                }`}
+              />
+            </button>
+
+            <LanguageSelector
+              languages={languages}
+              value={targetLanguage}
+              onChange={setTargetLanguage}
+              label="To"
+              disabled={loading}
+            />
+          </div>
+
+          {/* Translation Panels */}
+          <div className="grid md:grid-cols-2 gap-4 mb-4">
+            <TranslationPanel
+              value={inputText}
+              onChange={setInputText}
+              placeholder="Enter text to translate..."
+              isSource
+              language={getLanguageName(sourceLanguage)}
+              availableVoices={sourceVoices}
+              selectedVoice={sourceVoice}
+              onVoiceChange={setSourceVoice}
+              onSpeak={() => {
+                setSpeakingPanel("source");
+                speak(inputText, sourceVoice ?? undefined);
+              }}
+              onStop={stop}
+              speaking={speakingPanel === "source"}
+              ttsSupported={sourceTtsSupported}
+            />
+
+            <TranslationPanel
+              value={translatedText}
+              placeholder="Translation will appear here..."
+              readOnly
+              language={getLanguageName(targetLanguage)}
+              loading={loading}
+              availableVoices={targetVoices}
+              selectedVoice={targetVoice}
+              onVoiceChange={setTargetVoice}
+              onSpeak={() => {
+                setSpeakingPanel("target");
+                speak(translatedText, targetVoice ?? undefined);
+              }}
+              onStop={stop}
+              speaking={speakingPanel === "target"}
+              ttsSupported={targetTtsSupported}
+            />
+          </div>
+
+          <div className="flex justify-center">
+            <button
+              type="button"
+              onClick={handleTranslate}
+              disabled={!inputText.trim() || !translatedText.trim()}
+              className="px-8 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg shadow-sm disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            >
+              Save to History
+            </button>
+          </div>
+
+          <div
+            className={`fixed bottom-6 right-6 transition-all duration-300 transform ${
+              showHistorySidebar
+                ? "translate-x-20 opacity-0 pointer-events-none"
+                : "translate-x-0 opacity-100"
+            }`}
+          >
+            <button
+              type="button"
+              onClick={() => setShowHistorySidebar(true)}
+              className="flex items-center gap-2 px-4 py-3 bg-zinc-900 text-white rounded-full shadow-lg hover:shadow-xl hover:scale-105 transition-all duration-200"
+            >
+              <ClockIcon className="w-5 h-5" />
+              <span className="font-medium">History</span>
+              {history.length > 0 && (
+                <span className="flex items-center justify-center min-w-5 h-5 px-1.5 bg-blue-500 text-white text-xs font-semibold rounded-full">
+                  {history.length}
+                </span>
+              )}
+            </button>
+          </div>
+
+          <Alert
+            open={showClearConfirm}
+            onClose={() => setShowClearConfirm(false)}
+          >
+            <AlertTitle>Clear all history?</AlertTitle>
+            <AlertDescription>
+              This will permanently delete all your translation history. This
+              action cannot be undone.
+            </AlertDescription>
+            <AlertActions>
+              <Button plain onClick={() => setShowClearConfirm(false)}>
+                Cancel
+              </Button>
+              <Button
+                color="red"
+                onClick={() => {
+                  handleClearHistory();
+                  setShowClearConfirm(false);
+                }}
+              >
+                Clear All
+              </Button>
+            </AlertActions>
+          </Alert>
+        </div>
+      </main>
+
+      <HistorySidebar
+        open={showHistorySidebar}
+        onClose={() => setShowHistorySidebar(false)}
+        history={history}
+        onHistoryItemClick={handleHistoryItemClick}
+        onDeleteHistoryItem={handleDeleteHistoryItem}
+        onClearAll={() => setShowClearConfirm(true)}
+        getLanguageName={getLanguageName}
+      />
     </div>
   );
 }
