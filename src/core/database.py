@@ -95,6 +95,35 @@ class HistoryManager:
             timestamp=timestamp,
         )
 
+    def find_by_content(
+        self,
+        source_text: str,
+        source_lang: str,
+        target_lang: str,
+    ) -> HistoryItem | None:
+        """Find an existing history entry by source text and language pair.
+
+        Args:
+            source_text: The original text.
+            source_lang: Source language NLLB code.
+            target_lang: Target language NLLB code.
+
+        Returns:
+            The matching HistoryItem if found, None otherwise.
+        """
+        with self._get_connection() as conn:
+            cursor = conn.execute(
+                """
+                SELECT id, source_text, translated_text, source_lang, target_lang, timestamp
+                FROM history
+                WHERE source_text = ? AND source_lang = ? AND target_lang = ?
+                """,
+                (source_text, source_lang, target_lang),
+            )
+            row = cursor.fetchone()
+
+        return HistoryItem(*row) if row else None
+
     def list_all(self) -> list[HistoryItem]:
         """List all history entries, sorted by timestamp (newest first).
 

@@ -67,8 +67,28 @@ async def list_history() -> HistoryListResponse:
 
 @router.post("", response_model=HistoryItemResponse)
 async def create_history(request: HistoryItemCreate) -> HistoryItemResponse:
-    """Create a new translation history item."""
+    """Create a new translation history item.
+
+    If an entry with the same source text, source language, and target language
+    already exists, the existing entry is returned instead of creating a duplicate.
+    """
     manager = get_history_manager()
+
+    existing = manager.find_by_content(
+        source_text=request.source_text,
+        source_lang=request.source_lang,
+        target_lang=request.target_lang,
+    )
+
+    if existing:
+        return HistoryItemResponse(
+            id=existing.id,
+            source_text=existing.source_text,
+            translated_text=existing.translated_text,
+            source_lang=existing.source_lang,
+            target_lang=existing.target_lang,
+            timestamp=existing.timestamp,
+        )
 
     item = manager.create(
         source_text=request.source_text,
