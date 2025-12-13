@@ -404,7 +404,7 @@ export function TranslatorApp() {
             </div>
           )}
 
-          <div className="flex items-center justify-between gap-4 mb-4">
+          <div className="flex items-center justify-between gap-3 mb-4">
             <LanguageSelector
               languages={languages}
               value={sourceLanguage}
@@ -440,7 +440,7 @@ export function TranslatorApp() {
           </div>
 
           {/* Translation Panels */}
-          <div className="grid md:grid-cols-2 gap-4 mb-4">
+          <div className="grid md:grid-cols-2 gap-14 mb-4">
             <div className="relative">
               <button
                 type="button"
