@@ -23,10 +23,10 @@ export function HistorySidebar({
   return (
     <div
       className={`${
-        open ? "w-80 border-l" : "w-0"
+        open ? "w-120 border-l" : "w-0"
       } bg-white border-zinc-200 transition-[width] duration-300 ease-in-out overflow-hidden shrink-0 h-screen sticky top-0`}
     >
-      <div className="w-80 h-full flex flex-col">
+      <div className="w-120 h-full flex flex-col">
         {/* Header */}
         <div className="flex items-center justify-between border-b border-zinc-200 px-6 py-4 shrink-0">
           <div className="flex items-center gap-3">
@@ -83,10 +83,6 @@ export function HistorySidebar({
                   getLanguageName={getLanguageName}
                   onClick={() => {
                     onHistoryItemClick(item);
-                    // Optional: keep sidebar open or close it?
-                    // Usually users might want to pick multiple, but current behavior closed it.
-                    // I'll keep the close behavior consistent with previous version.
-                    onClose();
                   }}
                   onDelete={() => onDeleteHistoryItem(item.id)}
                 />
