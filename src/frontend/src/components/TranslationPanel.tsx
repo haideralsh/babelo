@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Textarea } from "./ui/textarea";
-import { VoiceSelector } from "./VoiceSelector";
-import { CopyIcon, CheckIcon, VolumeIcon, StopIcon } from "./icons";
+import { VoiceSplitButton } from "./VoiceSplitButton";
+import { CopyIcon, CheckIcon } from "./icons";
 import type { Voice } from "../hooks/useSpeechSynthesis";
 
 export interface TranslationPanelProps {
@@ -50,7 +50,7 @@ export function TranslationPanel({
 
   return (
     <div
-      className={`bg-white rounded-xl border border-zinc-200 overflow-hidden flex flex-col ${
+      className={`bg-white rounded-xl border border-zinc-200 flex flex-col ${
         readOnly ? "bg-zinc-50" : ""
       }`}
     >
@@ -71,33 +71,15 @@ export function TranslationPanel({
       <div className="flex items-center justify-between px-4 py-2 border-t border-zinc-200 bg-zinc-50/50">
         <div className="flex items-center gap-2">
           {ttsSupported && (
-            <>
-              <div className="w-40">
-                <VoiceSelector
-                  voices={availableVoices}
-                  selectedVoice={selectedVoice}
-                  onVoiceChange={onVoiceChange}
-                  disabled={!value || speaking}
-                />
-              </div>
-              <button
-                type="button"
-                onClick={speaking ? onStop : onSpeak}
-                disabled={!value || availableVoices.length === 0}
-                className={`h-8 w-8 p-0 inline-flex items-center justify-center rounded-lg transition-colors disabled:opacity-30 disabled:cursor-not-allowed ${
-                  speaking
-                    ? "text-red-500 hover:text-red-600 hover:bg-red-50"
-                    : "text-zinc-500 hover:text-zinc-900 hover:bg-zinc-100"
-                }`}
-                aria-label={speaking ? "Stop" : "Listen"}
-              >
-                {speaking ? (
-                  <StopIcon className="w-4 h-4" />
-                ) : (
-                  <VolumeIcon className="w-4 h-4" />
-                )}
-              </button>
-            </>
+            <VoiceSplitButton
+              voices={availableVoices}
+              selectedVoice={selectedVoice}
+              onVoiceChange={onVoiceChange}
+              onSpeak={onSpeak}
+              onStop={onStop}
+              speaking={speaking}
+              disabled={!value}
+            />
           )}
           {!ttsSupported && (
             <span className="text-xs text-zinc-400 italic">
