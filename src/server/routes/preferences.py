@@ -3,7 +3,7 @@
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 
-from core.database import get_preferences_manager
+from core.preferences import get_preferences_manager
 
 router = APIRouter(prefix="/preferences", tags=["preferences"])
 
