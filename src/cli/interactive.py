@@ -6,6 +6,7 @@ This module provides a REPL-style interface for:
 - Viewing model status
 """
 
+import random
 from pathlib import Path
 
 from prompt_toolkit import PromptSession, prompt
@@ -34,10 +35,37 @@ class LanguageCompleter(Completer):
 
             if text in name.lower() or text in code.lower():
                 yield Completion(
-                    code,  # Insert only the code
+                    code,
                     start_position=-len(document.text_before_cursor),
-                    display=display,  # Show full format in dropdown
+                    display=display,
                 )
+
+
+class CommandCompleter(Completer):
+    """Completer for slash commands"""
+
+    COMMANDS = [
+        ("/source", "Set source language"),
+        ("/target", "Set target language"),
+        ("/swap", "Swap source and target languages"),
+        ("/status", "Show model and session status"),
+        ("/languages", "List all available language codes"),
+        ("/help", "Show help message"),
+        ("/quit", "Exit interactive mode"),
+        ("/exit", "Exit interactive mode"),
+        ("/q", "Exit interactive mode"),
+    ]
+
+    def get_completions(self, document, complete_event):
+        text = document.text_before_cursor
+        if text.startswith("/") and " " not in text:
+            for cmd, desc in self.COMMANDS:
+                if cmd.startswith(text.lower()):
+                    yield Completion(
+                        cmd,
+                        start_position=-len(text),
+                        display=f"{cmd} - {desc}",
+                    )
 
 
 class InteractiveSession:
@@ -48,6 +76,7 @@ class InteractiveSession:
         self.manager = get_model_manager()
 
         self.lang_completer = LanguageCompleter(LANGUAGE_CODES)
+        self.command_completer = CommandCompleter()
 
         self.code_to_name = {v: k for k, v in LANGUAGE_CODES.items()}
         history_path = Path.home() / ".cache" / "bab" / "history"
@@ -69,16 +98,17 @@ class InteractiveSession:
         """Format a language setting for display."""
         if code:
             name = self._get_language_name(code)
-            return f"{label}: [cyan]{code}[/cyan] ({name})"
+            return f"{label}: [bold]{code}[/bold] ({name})"
         return f"{label}: [dim]not set[/dim]"
 
     def print_welcome(self):
         """Print welcome message and instructions."""
         banner = Text()
-        banner.append("╔═══╗\n", style="cyan")
-        banner.append("║ ", style="cyan")
-        banner.append("B A B \n", style="bold magenta")
-        banner.append("╚═══╝", style="cyan")
+        banner.append("╔═══╗\n", style="dim")
+        banner.append("║ ", style="dim")
+        banner.append("B A B", style="bold")
+        banner.append("\n", style="dim")
+        banner.append("╚═══╝", style="dim")
 
         self.console.print()
         self.console.print(banner)
@@ -93,16 +123,16 @@ class InteractiveSession:
         self.console.print()
 
         self.console.print(
-            "[dim]Type [/dim][cyan]/source[/cyan][dim] or [/dim][cyan]/target[/cyan][dim] to set languages, ",
+            "[dim]Type [/dim][bold white]/source[/bold white][dim] or [/dim][bold white]/target[/bold white][dim] to set languages",
             markup=True,
         )
 
         self.console.print(
-            "[dim]Type [/dim][cyan]/exit[/cyan][dim] or [/dim][cyan]/quit[/cyan][dim] to exit.[/dim]",
+            "[dim]Type [/dim][bold white]/exit[/bold white][dim] or [/dim][bold white]/quit[/bold white][dim] to exit.[/dim]",
             markup=True,
         )
         self.console.print(
-            "[dim]Type [/dim][cyan]/help[/cyan][dim] for all commands.[/dim]",
+            "[dim]Type [/dim][bold white]/help[/bold white][dim] for all commands.[/dim]",
             markup=True,
         )
         self.console.print()
@@ -111,13 +141,14 @@ class InteractiveSession:
 
     def print_help(self):
         """Print available commands."""
-        help_table = Table(show_header=True, header_style="bold cyan", box=None)
-        help_table.add_column("Command", style="cyan")
+        help_table = Table(show_header=True, header_style="bold", box=None)
+        help_table.add_column("Command", style="bold")
         help_table.add_column("Description")
 
         commands = [
             ("/source", "Set source language (with autocomplete)"),
             ("/target", "Set target language (with autocomplete)"),
+            ("/swap", "Swap source and target languages"),
             ("/status", "Show model and session status"),
             ("/languages", "List all available language codes"),
             ("/help", "Show this help message"),
@@ -147,12 +178,12 @@ class InteractiveSession:
                     self.preferences.set("cli:source_lang", lang)
                     name = self._get_language_name(lang)
                     self.console.print(
-                        f"[green]✓[/green] Source set to [cyan]{lang}[/cyan] ({name})",
+                        f"✓ Source set to [bold]{lang}[/bold] ({name})",
                         markup=True,
                     )
                 else:
                     self.console.print(
-                        f"[red]✗[/red] Unknown language code: '{lang}'", markup=True
+                        f"✗ Unknown language code: '{lang}'", markup=True
                     )
                     self.console.print(
                         "[dim]  Use /languages to see available codes.[/dim]",
@@ -160,6 +191,45 @@ class InteractiveSession:
                     )
         except (KeyboardInterrupt, EOFError):
             self.console.print("[dim]Cancelled[/dim]", markup=True)
+
+    def swap_languages(self):
+        """Swap source and target languages."""
+        if not self.source_lang and not self.target_lang:
+            self.console.print(
+                "⚠ Both source and target languages are not set.",
+                markup=True,
+            )
+            return
+
+        self.source_lang, self.target_lang = self.target_lang, self.source_lang
+
+        if self.source_lang:
+            self.preferences.set("cli:source_lang", self.source_lang)
+        else:
+            self.preferences.delete("cli:source_lang")
+
+        if self.target_lang:
+            self.preferences.set("cli:target_lang", self.target_lang)
+        else:
+            self.preferences.delete("cli:target_lang")
+
+        source_name = self._get_language_name(self.source_lang)
+        source_display = (
+            f"[bold]{self.source_lang}[/bold] ({source_name})"
+            if self.source_lang
+            else "[dim]not set[/dim]"
+        )
+        target_name = self._get_language_name(self.target_lang)
+        target_display = (
+            f"[bold]{self.target_lang}[/bold] ({target_name})"
+            if self.target_lang
+            else "[dim]not set[/dim]"
+        )
+
+        self.console.print(
+            f"✓ Languages swapped: {source_display} → {target_display}",
+            markup=True,
+        )
 
     def set_target_language(self):
         """Prompt user to set target language with autocomplete."""
@@ -176,12 +246,12 @@ class InteractiveSession:
                     self.preferences.set("cli:target_lang", lang)
                     name = self._get_language_name(lang)
                     self.console.print(
-                        f"[green]✓[/green] Target set to [cyan]{lang}[/cyan] ({name})",
+                        f"✓ Target set to [bold]{lang}[/bold] ({name})",
                         markup=True,
                     )
                 else:
                     self.console.print(
-                        f"[red]✗[/red] Unknown language code: '{lang}'", markup=True
+                        f"✗ Unknown language code: '{lang}'", markup=True
                     )
                     self.console.print(
                         "[dim]  Use /languages to see available codes.[/dim]",
@@ -194,22 +264,20 @@ class InteractiveSession:
         """Translate the given text and display result."""
         if not self.source_lang:
             self.console.print(
-                "[yellow]⚠[/yellow] Source language not set. "
-                "Use [cyan]/source[/cyan] first.",
+                "⚠ Source language not set. Use [bold]/source[/bold] first.",
                 markup=True,
             )
             return
 
         if not self.target_lang:
             self.console.print(
-                "[yellow]⚠[/yellow] Target language not set. "
-                "Use [cyan]/target[/cyan] first.",
+                "⚠ Target language not set. Use [bold]/target[/bold] first.",
                 markup=True,
             )
             return
 
         if not self.manager.is_downloaded:
-            self.console.print("[red]✗[/red] Model not downloaded.", markup=True)
+            self.console.print("✗ Model not downloaded.", markup=True)
             self.console.print(
                 "[dim]  Run 'bab download' from the command line first.[/dim]",
                 markup=True,
@@ -217,7 +285,7 @@ class InteractiveSession:
             return
 
         try:
-            with self.console.status("[cyan]Translating...[/cyan]", spinner="dots"):
+            with self.console.status("Translating...", spinner="dots"):
                 translated = self.manager.translate(
                     text, self.source_lang, self.target_lang
                 )
@@ -227,21 +295,21 @@ class InteractiveSession:
 
             result_panel = Panel(
                 translated,
-                title=f"[dim]{source_name}[/dim] → [cyan]{target_name}[/cyan]",
-                border_style="green",
+                title=f"[dim]{source_name}[/dim] → [bold]{target_name}[/bold]",
+                border_style="white",
                 padding=(0, 1),
             )
             self.console.print(result_panel)
 
         except RuntimeError as e:
-            self.console.print(f"[red]✗[/red] Translation failed: {e}", markup=True)
+            self.console.print(f"✗ Translation failed: {e}", markup=True)
 
     def show_status(self):
         """Show current model and session status."""
         self.console.print()
 
         status_table = Table(
-            show_header=True, header_style="bold cyan", box=None, padding=(0, 2)
+            show_header=True, header_style="bold", box=None, padding=(0, 2)
         )
         status_table.add_column("Setting", style="dim")
         status_table.add_column("Value")
@@ -266,11 +334,11 @@ class InteractiveSession:
         status_table.add_row("Cache Directory", str(self.manager.cache_dir))
 
         downloaded = self.manager.is_downloaded
-        downloaded_status = "[green]Yes[/green]" if downloaded else "[red]No[/red]"
+        downloaded_status = "[bold]Yes[/bold]" if downloaded else "No"
         status_table.add_row("Downloaded", downloaded_status)
 
         loaded = self.manager.is_loaded
-        loaded_status = "[green]Yes[/green]" if loaded else "[dim]No[/dim]"
+        loaded_status = "[bold]Yes[/bold]" if loaded else "[dim]No[/dim]"
         status_table.add_row("Loaded in Memory", loaded_status)
 
         if downloaded:
@@ -288,15 +356,15 @@ class InteractiveSession:
         """Display available languages in a formatted table."""
         table = Table(
             show_header=True,
-            header_style="bold cyan",
+            header_style="bold",
             title="Available Languages",
             title_style="bold",
         )
 
         table.add_column("Language", style="white")
-        table.add_column("Code", style="cyan")
+        table.add_column("Code", style="bold")
         table.add_column("Language", style="white")
-        table.add_column("Code", style="cyan")
+        table.add_column("Code", style="bold")
 
         sorted_langs = sorted(LANGUAGE_CODES.items())
         mid = (len(sorted_langs) + 1) // 2
@@ -324,11 +392,16 @@ class InteractiveSession:
         while True:
             try:
                 if self.source_lang and self.target_lang:
-                    prompt_text = f"[{self.source_lang} → {self.target_lang}] bab> "
+                    source_name = self._get_language_name(self.source_lang)
+                    target_name = self._get_language_name(self.target_lang)
+
+                    prompt_text = f"[{source_name} → {target_name}] bab> "
                 else:
                     prompt_text = "bab> "
 
-                user_input = self.session.prompt(prompt_text, completer=None).strip()
+                user_input = self.session.prompt(
+                    prompt_text, completer=self.command_completer
+                ).strip()
 
                 if not user_input:
                     continue
@@ -339,6 +412,8 @@ class InteractiveSession:
                     self.set_source_language()
                 elif user_input == "/target":
                     self.set_target_language()
+                elif user_input == "/swap":
+                    self.swap_languages()
                 elif user_input == "/status":
                     self.show_status()
                 elif user_input == "/languages":
@@ -347,7 +422,7 @@ class InteractiveSession:
                     self.print_help()
                 elif user_input.startswith("/"):
                     self.console.print(
-                        f"[yellow]Unknown command:[/yellow] {user_input}",
+                        f"Unknown command: {user_input}",
                         markup=True,
                     )
                     self.console.print(
@@ -362,7 +437,16 @@ class InteractiveSession:
             except EOFError:
                 break
 
-        self.console.print("\n[dim]Goodbye![/dim]", markup=True)
+        goodbye_phrases = [
+            "Goodbye!",
+            "¡Adiós!",
+            "Au revoir!",
+            "Tchau!",
+            "Ciao!",
+        ]
+        farewell = random.choice(goodbye_phrases)
+        self.console.print(f"\n[dim]{farewell}[/dim]", markup=True)
+        self.console.print()
 
 
 def run_interactive():
