@@ -8,8 +8,6 @@ This module provides command-line utilities for:
 
 import argparse
 import logging
-import os
-import subprocess
 import sys
 import time
 
@@ -285,7 +283,7 @@ def main() -> int:
     setup_logging(args.verbose)
 
     if not args.command:
-        from bab.interactive import run_interactive
+        from cli.interactive import run_interactive
 
         run_interactive()
         return 0

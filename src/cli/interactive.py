@@ -17,6 +17,7 @@ from rich.table import Table
 from rich.text import Text
 
 from core.model import LANGUAGE_CODES, MODEL_NAME, get_model_manager
+from core.preferences import get_preferences_manager
 
 
 class LanguageCompleter(Completer):
@@ -30,7 +31,7 @@ class LanguageCompleter(Completer):
         text = document.text_before_cursor.lower()
         for name, code in self.languages:
             display = f"{name} ({code})"
-            # Match against name or code
+
             if text in name.lower() or text in code.lower():
                 yield Completion(
                     code,  # Insert only the code
@@ -44,20 +45,21 @@ class InteractiveSession:
 
     def __init__(self):
         self.console = Console()
-        self.source_lang: str | None = None
-        self.target_lang: str | None = None
         self.manager = get_model_manager()
 
-        # Custom completer: shows "Name (code)" but inserts only the code
         self.lang_completer = LanguageCompleter(LANGUAGE_CODES)
 
-        # Create a reverse mapping from code to name for display
         self.code_to_name = {v: k for k, v in LANGUAGE_CODES.items()}
-
-        # Setup prompt with history
         history_path = Path.home() / ".cache" / "bab" / "history"
         history_path.parent.mkdir(parents=True, exist_ok=True)
         self.session = PromptSession(history=FileHistory(str(history_path)))
+
+        self.preferences = get_preferences_manager()
+        valid_codes = set(LANGUAGE_CODES.values())
+        saved_source = self.preferences.get("cli:source_lang")
+        self.source_lang = saved_source if saved_source in valid_codes else None
+        saved_target = self.preferences.get("cli:target_lang")
+        self.target_lang = saved_target if saved_target in valid_codes else None
 
     def _get_language_name(self, code: str) -> str:
         """Get the human-readable name for a language code."""
@@ -82,7 +84,6 @@ class InteractiveSession:
         self.console.print(banner)
         self.console.print()
 
-        # Show current settings
         self.console.print(
             self._format_lang_setting("  Source", self.source_lang), markup=True
         )
@@ -91,12 +92,21 @@ class InteractiveSession:
         )
         self.console.print()
 
-        # Show quick help
         self.console.print(
-            "[dim]Type [/dim]/help[dim] for commands, "
-            "or enter text to translate.[/dim]",
+            "[dim]Type [/dim][cyan]/source[/cyan][dim] or [/dim][cyan]/target[/cyan][dim] to set languages, ",
             markup=True,
         )
+
+        self.console.print(
+            "[dim]Type [/dim][cyan]/exit[/cyan][dim] or [/dim][cyan]/quit[/cyan][dim] to exit.[/dim]",
+            markup=True,
+        )
+        self.console.print(
+            "[dim]Type [/dim][cyan]/help[/cyan][dim] for all commands.[/dim]",
+            markup=True,
+        )
+        self.console.print()
+        self.console.print("[dim]Enter text to translate.[/dim]")
         self.console.print()
 
     def print_help(self):
@@ -134,6 +144,7 @@ class InteractiveSession:
                 valid_codes = set(LANGUAGE_CODES.values())
                 if lang in valid_codes:
                     self.source_lang = lang
+                    self.preferences.set("cli:source_lang", lang)
                     name = self._get_language_name(lang)
                     self.console.print(
                         f"[green]✓[/green] Source set to [cyan]{lang}[/cyan] ({name})",
@@ -162,6 +173,7 @@ class InteractiveSession:
                 valid_codes = set(LANGUAGE_CODES.values())
                 if lang in valid_codes:
                     self.target_lang = lang
+                    self.preferences.set("cli:target_lang", lang)
                     name = self._get_language_name(lang)
                     self.console.print(
                         f"[green]✓[/green] Target set to [cyan]{lang}[/cyan] ({name})",
@@ -180,7 +192,6 @@ class InteractiveSession:
 
     def translate_text(self, text: str):
         """Translate the given text and display result."""
-        # Check if languages are set
         if not self.source_lang:
             self.console.print(
                 "[yellow]⚠[/yellow] Source language not set. "
@@ -197,7 +208,6 @@ class InteractiveSession:
             )
             return
 
-        # Check if model is downloaded
         if not self.manager.is_downloaded:
             self.console.print("[red]✗[/red] Model not downloaded.", markup=True)
             self.console.print(
@@ -206,14 +216,12 @@ class InteractiveSession:
             )
             return
 
-        # Perform translation
         try:
             with self.console.status("[cyan]Translating...[/cyan]", spinner="dots"):
                 translated = self.manager.translate(
                     text, self.source_lang, self.target_lang
                 )
 
-            # Display result in a nice panel
             source_name = self._get_language_name(self.source_lang)
             target_name = self._get_language_name(self.target_lang)
 
@@ -232,14 +240,12 @@ class InteractiveSession:
         """Show current model and session status."""
         self.console.print()
 
-        # Session status
         status_table = Table(
             show_header=True, header_style="bold cyan", box=None, padding=(0, 2)
         )
         status_table.add_column("Setting", style="dim")
         status_table.add_column("Value")
 
-        # Language settings
         if self.source_lang:
             source_name = self._get_language_name(self.source_lang)
             source_val = f"{self.source_lang} ({source_name})"
@@ -256,7 +262,6 @@ class InteractiveSession:
         status_table.add_row("Target Language", target_val)
         status_table.add_row("", "")
 
-        # Model status
         status_table.add_row("Model", MODEL_NAME)
         status_table.add_row("Cache Directory", str(self.manager.cache_dir))
 
@@ -269,7 +274,6 @@ class InteractiveSession:
         status_table.add_row("Loaded in Memory", loaded_status)
 
         if downloaded:
-            # Calculate approximate size
             total_size = 0
             for file in self.manager.model_path.rglob("*"):
                 if file.is_file():
@@ -282,7 +286,6 @@ class InteractiveSession:
 
     def show_languages(self):
         """Display available languages in a formatted table."""
-        # Create a table with multiple columns for compact display
         table = Table(
             show_header=True,
             header_style="bold cyan",
@@ -295,11 +298,9 @@ class InteractiveSession:
         table.add_column("Language", style="white")
         table.add_column("Code", style="cyan")
 
-        # Sort languages by name
         sorted_langs = sorted(LANGUAGE_CODES.items())
         mid = (len(sorted_langs) + 1) // 2
 
-        # Split into two columns
         left_col = sorted_langs[:mid]
         right_col = sorted_langs[mid:]
 
@@ -322,9 +323,8 @@ class InteractiveSession:
 
         while True:
             try:
-                # Build prompt with language indicators
                 if self.source_lang and self.target_lang:
-                    prompt_text = f"[{self.source_lang}→{self.target_lang}] bab> "
+                    prompt_text = f"[{self.source_lang} → {self.target_lang}] bab> "
                 else:
                     prompt_text = "bab> "
 
@@ -333,7 +333,6 @@ class InteractiveSession:
                 if not user_input:
                     continue
 
-                # Handle commands
                 if user_input in ("/quit", "/exit", "/q"):
                     break
                 elif user_input == "/source":
@@ -356,13 +355,12 @@ class InteractiveSession:
                         markup=True,
                     )
                 else:
-                    # Treat as text to translate
                     self.translate_text(user_input)
 
             except KeyboardInterrupt:
-                continue  # Ctrl+C clears current input
+                continue
             except EOFError:
-                break  # Ctrl+D exits
+                break
 
         self.console.print("\n[dim]Goodbye![/dim]", markup=True)
 
