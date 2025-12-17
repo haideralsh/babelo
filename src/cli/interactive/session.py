@@ -10,62 +10,15 @@ import random
 from pathlib import Path
 
 from prompt_toolkit import PromptSession, prompt
-from prompt_toolkit.completion import Completer, Completion
 from prompt_toolkit.history import FileHistory
 from rich.console import Console
 from rich.panel import Panel
 from rich.table import Table
 from rich.text import Text
 
+from cli.interactive.completers import CommandCompleter, LanguageCompleter
 from core.model import LANGUAGE_CODES, MODEL_NAME, get_model_manager
 from core.preferences import get_preferences_manager
-
-
-class LanguageCompleter(Completer):
-    """Custom completer that shows 'Name (code)' but inserts only the code."""
-
-    def __init__(self, language_codes: dict[str, str]):
-        # language_codes: {name: code}
-        self.languages = [(name, code) for name, code in language_codes.items()]
-
-    def get_completions(self, document, complete_event):
-        text = document.text_before_cursor.lower()
-        for name, code in self.languages:
-            display = f"{name} ({code})"
-
-            if text in name.lower() or text in code.lower():
-                yield Completion(
-                    code,
-                    start_position=-len(document.text_before_cursor),
-                    display=display,
-                )
-
-
-class CommandCompleter(Completer):
-    """Completer for slash commands"""
-
-    COMMANDS = [
-        ("/source", "Set source language"),
-        ("/target", "Set target language"),
-        ("/swap", "Swap source and target languages"),
-        ("/status", "Show model and session status"),
-        ("/languages", "List all available language codes"),
-        ("/help", "Show help message"),
-        ("/quit", "Exit interactive mode"),
-        ("/exit", "Exit interactive mode"),
-        ("/q", "Exit interactive mode"),
-    ]
-
-    def get_completions(self, document, complete_event):
-        text = document.text_before_cursor
-        if text.startswith("/") and " " not in text:
-            for cmd, desc in self.COMMANDS:
-                if cmd.startswith(text.lower()):
-                    yield Completion(
-                        cmd,
-                        start_position=-len(text),
-                        display=f"{cmd} - {desc}",
-                    )
 
 
 class InteractiveSession:
@@ -123,16 +76,19 @@ class InteractiveSession:
         self.console.print()
 
         self.console.print(
-            "[dim]Type [/dim][bold white]/source[/bold white][dim] or [/dim][bold white]/target[/bold white][dim] to set languages",
+            "[dim]Type [/dim][bold white]/source[/bold white][dim] or [/dim]"
+            "[bold white]/target[/bold white][dim] to set languages",
             markup=True,
         )
 
         self.console.print(
-            "[dim]Type [/dim][bold white]/exit[/bold white][dim] or [/dim][bold white]/quit[/bold white][dim] to exit.[/dim]",
+            "[dim]Type [/dim][bold white]/exit[/bold white][dim] or [/dim]"
+            "[bold white]/quit[/bold white][dim] to exit.[/dim]",
             markup=True,
         )
         self.console.print(
-            "[dim]Type [/dim][bold white]/help[/bold white][dim] for all commands.[/dim]",
+            "[dim]Type [/dim][bold white]/help[/bold white]"
+            "[dim] for all commands.[/dim]",
             markup=True,
         )
         self.console.print()
