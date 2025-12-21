@@ -35,6 +35,7 @@ class CommandCompleter(Completer):
         ("/swap", "Swap source and target languages"),
         ("/status", "Show model and session status"),
         ("/languages", "List all available language codes"),
+        ("/clear", "Clear screen and history"),
         ("/help", "Show help message"),
         ("/quit", "Exit interactive mode"),
         ("/exit", "Exit interactive mode"),

@@ -6,6 +6,7 @@ This module provides a REPL-style interface for:
 - Viewing model status
 """
 
+import os
 import random
 from pathlib import Path
 
@@ -51,7 +52,7 @@ class InteractiveSession:
         """Format a language setting for display."""
         if code:
             name = self._get_language_name(code)
-            return f"{label}: [bold]{code}[/bold] ({name})"
+            return f"{label}: {name} ({code})"
         return f"{label}: [dim]not set[/dim]"
 
     def print_welcome(self):
@@ -107,6 +108,7 @@ class InteractiveSession:
             ("/swap", "Swap source and target languages"),
             ("/status", "Show model and session status"),
             ("/languages", "List all available language codes"),
+            ("/clear", "Clear screen and history"),
             ("/help", "Show this help message"),
             ("/quit, /exit, /q", "Exit interactive mode"),
             ("<text>", "Translate the entered text"),
@@ -241,7 +243,9 @@ class InteractiveSession:
             return
 
         try:
-            with self.console.status("Translating...", spinner="dots"):
+            with self.console.status(
+                "", spinner="simpleDotsScrolling", spinner_style="white"
+            ):
                 translated = self.manager.translate(
                     text, self.source_lang, self.target_lang
                 )
@@ -341,6 +345,15 @@ class InteractiveSession:
         self.console.print(f"\n[dim]Total: {len(LANGUAGE_CODES)} languages[/dim]")
         self.console.print()
 
+    def clear_screen(self):
+        """Clear terminal screen and reset command history."""
+        os.system("clear" if os.name != "nt" else "cls")
+        history_path = Path.home() / ".cache" / "bab" / "history"
+        if history_path.exists():
+            history_path.unlink()
+        self.session = PromptSession(history=FileHistory(str(history_path)))
+        self.print_welcome()
+
     def run(self):
         """Main REPL loop."""
         self.print_welcome()
@@ -374,6 +387,8 @@ class InteractiveSession:
                     self.show_status()
                 elif user_input == "/languages":
                     self.show_languages()
+                elif user_input == "/clear":
+                    self.clear_screen()
                 elif user_input == "/help":
                     self.print_help()
                 elif user_input.startswith("/"):
@@ -389,6 +404,7 @@ class InteractiveSession:
                     self.translate_text(user_input)
 
             except KeyboardInterrupt:
+                self.console.print("(To exit, use /exit /quit or /q)")
                 continue
             except EOFError:
                 break
