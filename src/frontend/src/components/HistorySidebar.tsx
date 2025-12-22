@@ -30,7 +30,7 @@ export function HistorySidebar({
         {/* Header */}
         <div className="flex items-center justify-between border-b border-zinc-200 px-6 py-4 shrink-0">
           <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-500/10">
+            <div className="flex h-10 w-10 items-center justify-center bg-blue-500/10">
               <ClockIcon className="h-5 w-5 text-blue-600" />
             </div>
             <div>
@@ -44,7 +44,7 @@ export function HistorySidebar({
           <button
             type="button"
             onClick={onClose}
-            className="rounded-lg p-2 text-zinc-500 hover:bg-zinc-100 hover:text-zinc-900 transition-colors"
+            className="p-2 text-zinc-500 hover:bg-zinc-100 hover:text-zinc-900 transition-colors"
           >
             <XIcon className="h-5 w-5" />
           </button>
@@ -56,7 +56,7 @@ export function HistorySidebar({
             <button
               type="button"
               onClick={onClearAll}
-              className="inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm font-medium text-red-600 hover:bg-red-50 transition-colors"
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-red-600 hover:bg-red-50 transition-colors"
             >
               <TrashIcon className="h-4 w-4" />
               Clear all
@@ -68,7 +68,7 @@ export function HistorySidebar({
         <div className="flex-1 overflow-y-auto px-6 py-4">
           {history.length === 0 ? (
             <div className="flex flex-col items-center justify-center h-full text-center text-zinc-500">
-              <div className="rounded-full bg-zinc-100 p-4 mb-4">
+              <div className="bg-zinc-100 p-4 mb-4">
                 <ClockIcon className="h-8 w-8 opacity-50" />
               </div>
               <p className="font-medium">No history yet</p>

@@ -390,7 +390,7 @@ export function TranslatorApp() {
       <main className="flex-1 min-w-0 h-full overflow-y-auto">
         <div className="max-w-5xl mx-auto px-4 py-8 md:py-12 pb-24">
           <header className="flex items-center gap-3 mb-8">
-            <div className="p-2 bg-blue-500/10 rounded-xl">
+            <div className="p-2 bg-blue-500/10">
               <LanguagesIcon className="w-6 h-6 text-blue-600" />
             </div>
             <h1 className="text-2xl font-semibold text-zinc-900">
@@ -399,7 +399,7 @@ export function TranslatorApp() {
           </header>
 
           {error && (
-            <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-lg text-red-700">
+            <div className="mb-4 p-4 bg-red-50 border border-red-200 text-red-700">
               {error}
             </div>
           )}
@@ -420,7 +420,7 @@ export function TranslatorApp() {
                 handleSwapLanguages();
               }}
               disabled={loading}
-              className="rounded-full p-2 text-zinc-500 hover:text-blue-500 hover:bg-blue-500/20 transition-colors shrink-0 mt-5 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="p-2 text-zinc-500 hover:text-blue-500 hover:bg-blue-500/20 transition-colors shrink-0 mt-5 disabled:opacity-50 disabled:cursor-not-allowed"
               aria-label="Swap languages"
             >
               <ArrowRightLeftIcon
@@ -446,7 +446,7 @@ export function TranslatorApp() {
                 type="button"
                 onClick={handleTranslate}
                 disabled={!inputText.trim() || !translatedText.trim()}
-                className="absolute -left-10 top-2 p-2 text-amber-500 hover:text-amber-600 hover:bg-amber-50 rounded-full transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+                className="absolute -left-10 top-2 p-2 text-amber-500 hover:text-amber-600 hover:bg-amber-50 transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
                 title="Save to History"
               >
                 <StarIcon className="w-6 h-6" />
@@ -499,12 +499,12 @@ export function TranslatorApp() {
             <button
               type="button"
               onClick={() => setShowHistorySidebar(true)}
-              className="flex items-center gap-2 px-4 py-3 bg-zinc-900 text-white rounded-full shadow-lg hover:shadow-xl hover:scale-105 transition-all duration-200"
+              className="flex items-center gap-2 px-4 py-3 bg-zinc-900 text-white shadow-lg hover:shadow-xl hover:scale-105 transition-all duration-200"
             >
               <ClockIcon className="w-5 h-5" />
               <span className="font-medium">History</span>
               {history.length > 0 && (
-                <span className="flex items-center justify-center min-w-5 h-5 px-1.5 bg-blue-500 text-white text-xs font-semibold rounded-full">
+                <span className="flex items-center justify-center min-w-5 h-5 px-1.5 bg-blue-500 text-white text-xs font-semibold">
                   {history.length}
                 </span>
               )}

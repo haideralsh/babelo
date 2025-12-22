@@ -50,7 +50,7 @@ export function TranslationPanel({
 
   return (
     <div
-      className={`bg-white rounded-xl border border-zinc-200 flex flex-col ${
+      className={`bg-white border border-zinc-200 flex flex-col ${
         readOnly ? "bg-zinc-50" : ""
       }`}
     >
@@ -63,7 +63,7 @@ export function TranslationPanel({
           disabled={readOnly}
           resizable={false}
           rows={8}
-          className="border-0 rounded-none"
+          className="border-0"
         />
       </div>
 
@@ -90,7 +90,7 @@ export function TranslationPanel({
             type="button"
             onClick={handleCopy}
             disabled={!value}
-            className="h-8 w-8 p-0 inline-flex items-center justify-center rounded-lg text-zinc-500 hover:text-zinc-900 hover:bg-zinc-100 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+            className="h-8 w-8 p-0 inline-flex items-center justify-center text-zinc-500 hover:text-zinc-900 hover:bg-zinc-100 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
             aria-label="Copy"
           >
             {copied ? (

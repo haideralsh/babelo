@@ -100,7 +100,7 @@ export function OnboardingScreen({ onComplete }: OnboardingScreenProps) {
       <div className="absolute inset-0 bg-gradient-to-br from-teal-950 via-slate-900 to-indigo-950">
         {/* Animated orbs */}
         <motion.div
-          className="absolute w-[600px] h-[600px] rounded-full bg-teal-500/20 blur-3xl"
+          className="absolute w-[600px] h-[600px] bg-teal-500/20 blur-3xl"
           animate={{
             x: [0, 100, 0],
             y: [0, -50, 0],
@@ -113,7 +113,7 @@ export function OnboardingScreen({ onComplete }: OnboardingScreenProps) {
           style={{ top: "-20%", left: "-10%" }}
         />
         <motion.div
-          className="absolute w-[500px] h-[500px] rounded-full bg-indigo-500/20 blur-3xl"
+          className="absolute w-[500px] h-[500px] bg-indigo-500/20 blur-3xl"
           animate={{
             x: [0, -80, 0],
             y: [0, 60, 0],
@@ -126,7 +126,7 @@ export function OnboardingScreen({ onComplete }: OnboardingScreenProps) {
           style={{ bottom: "-15%", right: "-5%" }}
         />
         <motion.div
-          className="absolute w-[300px] h-[300px] rounded-full bg-cyan-400/10 blur-2xl"
+          className="absolute w-[300px] h-[300px] bg-cyan-400/10 blur-2xl"
           animate={{
             x: [0, 50, 0],
             y: [0, 80, 0],
@@ -149,7 +149,7 @@ export function OnboardingScreen({ onComplete }: OnboardingScreenProps) {
           transition={{ duration: 0.8, ease: "easeOut" }}
           className="mb-8"
         >
-          <div className="inline-flex items-center justify-center w-20 h-20 rounded-2xl bg-gradient-to-br from-teal-400 to-cyan-500 shadow-lg shadow-teal-500/30 mb-6">
+          <div className="inline-flex items-center justify-center w-20 h-20 bg-gradient-to-br from-teal-400 to-cyan-500 shadow-lg shadow-teal-500/30 mb-6">
             <LanguagesIcon className="w-10 h-10 text-white" />
           </div>
           <h1 className="text-5xl font-bold text-white tracking-tight mb-3">
@@ -182,7 +182,7 @@ export function OnboardingScreen({ onComplete }: OnboardingScreenProps) {
             <motion.div
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
-              className="p-4 bg-red-500/20 border border-red-500/30 rounded-xl text-red-200 text-sm mb-4"
+              className="p-4 bg-red-500/20 border border-red-500/30 text-red-200 text-sm mb-4"
             >
               {errorMessage}
             </motion.div>
@@ -230,4 +230,3 @@ export function OnboardingScreen({ onComplete }: OnboardingScreenProps) {
     </div>
   );
 }
-

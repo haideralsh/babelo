@@ -37,7 +37,7 @@ export function VoiceSplitButton({
     <div className="relative">
       {/* Split Button Container */}
       <div
-        className={`inline-flex items-stretch rounded-lg border transition-colors ${
+        className={`inline-flex items-stretch border transition-colors ${
           speaking
             ? "border-red-200 bg-red-50"
             : "border-zinc-200 bg-white hover:border-zinc-300"
@@ -48,7 +48,7 @@ export function VoiceSplitButton({
           type="button"
           onClick={speaking ? onStop : onSpeak}
           disabled={isDisabled}
-          className={`h-8 px-2.5 inline-flex items-center justify-center transition-colors rounded-l-[7px] ${
+          className={`h-8 px-2.5 inline-flex items-center justify-center transition-colors ${
             speaking
               ? "text-red-500 hover:text-red-600 hover:bg-red-100"
               : "text-zinc-600 hover:text-zinc-900 hover:bg-zinc-100"
@@ -73,7 +73,7 @@ export function VoiceSplitButton({
         >
           <Headless.ListboxButton
             className={clsx(
-              "h-8 px-1.5 inline-flex items-center justify-center transition-colors rounded-r-[7px]",
+              "h-8 px-1.5 inline-flex items-center justify-center transition-colors",
               "focus:outline-none",
               speaking
                 ? "text-red-400 hover:text-red-500 hover:bg-red-100 data-open:bg-red-100"
@@ -107,7 +107,7 @@ export function VoiceSplitButton({
               // Anchor positioning
               "[--anchor-gap:0.25rem] [--anchor-padding:--spacing(4)]",
               // Base styles
-              "isolate min-w-[180px] max-h-[240px] scroll-py-1 rounded-lg p-1 select-none",
+              "isolate min-w-[180px] max-h-[240px] scroll-py-1 p-1 select-none",
               // Invisible border that is only visible in `forced-colors` mode for accessibility purposes
               "outline outline-transparent focus:outline-hidden",
               // Handle scrolling when menu won't fit in viewport
@@ -133,7 +133,7 @@ export function VoiceSplitButton({
                   value={voice}
                   className={clsx(
                     // Basic layout
-                    "group/option grid cursor-default grid-cols-[--spacing(5)_1fr] items-baseline gap-x-2 rounded-lg py-2 pr-3 pl-2",
+                    "group/option grid cursor-default grid-cols-[--spacing(5)_1fr] items-baseline gap-x-2 py-2 pr-3 pl-2",
                     // Typography
                     "text-sm text-zinc-950",
                     // Focus

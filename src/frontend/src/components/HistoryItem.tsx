@@ -38,7 +38,7 @@ export function HistoryItem({
 
   return (
     <div
-      className="group relative bg-white border border-zinc-200 rounded-lg p-4 hover:border-blue-300 hover:shadow-sm transition-all cursor-pointer"
+      className="group relative bg-white border border-zinc-200 p-4 hover:border-blue-300 hover:shadow-sm transition-all cursor-pointer"
       onClick={onClick}
     >
       {/* Delete Button */}
@@ -48,7 +48,7 @@ export function HistoryItem({
           e.stopPropagation();
           onDelete();
         }}
-        className="absolute top-2 right-2 h-7 w-7 p-0 inline-flex items-center justify-center rounded-lg text-zinc-500 hover:text-zinc-900 hover:bg-zinc-100 opacity-0 group-hover:opacity-100 transition-opacity"
+        className="absolute top-2 right-2 h-7 w-7 p-0 inline-flex items-center justify-center text-zinc-500 hover:text-zinc-900 hover:bg-zinc-100 opacity-0 group-hover:opacity-100 transition-opacity"
         aria-label="Delete"
       >
         <XIcon className="w-4 h-4" />
