@@ -97,7 +97,7 @@ export function OnboardingScreen({ onComplete }: OnboardingScreenProps) {
   return (
     <div className="min-h-screen relative overflow-hidden flex items-center justify-center">
       {/* Animated gradient background */}
-      <div className="absolute inset-0 bg-gradient-to-br from-teal-950 via-slate-900 to-indigo-950">
+      <div className="absolute inset-0  from-teal-950 via-slate-900 to-indigo-950">
         {/* Animated orbs */}
         <motion.div
           className="absolute w-[600px] h-[600px] bg-teal-500/20 blur-3xl"
@@ -149,7 +149,7 @@ export function OnboardingScreen({ onComplete }: OnboardingScreenProps) {
           transition={{ duration: 0.8, ease: "easeOut" }}
           className="mb-8"
         >
-          <div className="inline-flex items-center justify-center w-20 h-20 bg-gradient-to-br from-teal-400 to-cyan-500 shadow-lg shadow-teal-500/30 mb-6">
+          <div className="inline-flex items-center justify-center w-20 h-20 from-teal-400 to-cyan-500 shadow-lg shadow-teal-500/30 mb-6">
             <LanguagesIcon className="w-10 h-10 text-white" />
           </div>
           <h1 className="text-5xl font-bold text-white tracking-tight mb-3">
@@ -192,7 +192,6 @@ export function OnboardingScreen({ onComplete }: OnboardingScreenProps) {
             color="cyan"
             onClick={handleDownload}
             disabled={downloadState === "downloading"}
-            className="!px-8 !py-3 !text-base"
           >
             {downloadState === "downloading" ? (
               <>
