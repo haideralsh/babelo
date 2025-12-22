@@ -22,7 +22,6 @@ import {
   LanguagesIcon,
   ArrowRightLeftIcon,
   ClockIcon,
-  StarIcon,
 } from "./components/icons";
 
 export function TranslatorApp() {
@@ -441,34 +440,25 @@ export function TranslatorApp() {
 
           {/* Translation Panels */}
           <div className="grid md:grid-cols-2 gap-14 mb-4">
-            <div className="relative">
-              <button
-                type="button"
-                onClick={handleTranslate}
-                disabled={!inputText.trim() || !translatedText.trim()}
-                className="absolute -left-10 top-2 p-2 text-amber-500 hover:text-amber-600 hover:bg-amber-50 transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
-                title="Save to History"
-              >
-                <StarIcon className="w-6 h-6" />
-              </button>
-              <TranslationPanel
-                value={inputText}
-                onChange={setInputText}
-                placeholder="Enter text to translate..."
-                isSource
-                language={getLanguageName(sourceLanguage)}
-                availableVoices={sourceVoices}
-                selectedVoice={sourceVoice}
-                onVoiceChange={setSourceVoice}
-                onSpeak={() => {
-                  setSpeakingPanel("source");
-                  speak(inputText, sourceVoice ?? undefined);
-                }}
-                onStop={stop}
-                speaking={speakingPanel === "source"}
-                ttsSupported={sourceTtsSupported}
-              />
-            </div>
+            <TranslationPanel
+              value={inputText}
+              onChange={setInputText}
+              placeholder="Enter text to translate..."
+              isSource
+              language={getLanguageName(sourceLanguage)}
+              availableVoices={sourceVoices}
+              selectedVoice={sourceVoice}
+              onVoiceChange={setSourceVoice}
+              onSpeak={() => {
+                setSpeakingPanel("source");
+                speak(inputText, sourceVoice ?? undefined);
+              }}
+              onStop={stop}
+              speaking={speakingPanel === "source"}
+              ttsSupported={sourceTtsSupported}
+              onSave={handleTranslate}
+              saveDisabled={!inputText.trim() || !translatedText.trim()}
+            />
 
             <TranslationPanel
               value={translatedText}

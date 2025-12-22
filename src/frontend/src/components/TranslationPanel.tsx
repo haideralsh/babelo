@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Textarea } from "./ui/textarea";
 import { VoiceSplitButton } from "./VoiceSplitButton";
-import { CopyIcon, CheckIcon } from "./icons";
+import { CopyIcon, CheckIcon, StarIcon } from "./icons";
 import type { Voice } from "../hooks/useSpeechSynthesis";
 
 export interface TranslationPanelProps {
@@ -19,6 +19,8 @@ export interface TranslationPanelProps {
   onStop: () => void;
   speaking?: boolean;
   ttsSupported?: boolean;
+  onSave?: () => void;
+  saveDisabled?: boolean;
 }
 
 export function TranslationPanel({
@@ -36,6 +38,8 @@ export function TranslationPanel({
   onStop,
   speaking = false,
   ttsSupported = false,
+  onSave,
+  saveDisabled = true,
 }: TranslationPanelProps) {
   const [copied, setCopied] = useState(false);
 
@@ -50,7 +54,7 @@ export function TranslationPanel({
 
   return (
     <div
-      className={`bg-white border border-zinc-200 flex flex-col ${
+      className={`relative bg-white border border-zinc-200 flex flex-col ${
         readOnly ? "bg-zinc-50" : ""
       }`}
     >
@@ -65,6 +69,18 @@ export function TranslationPanel({
           rows={8}
           className="border-0"
         />
+        {/* Save to History Button - inside textarea area */}
+        {isSource && onSave && (
+          <button
+            type="button"
+            onClick={onSave}
+            disabled={saveDisabled}
+            className="absolute top-2 right-2 p-1.5 text-amber-400 hover:text-amber-500 transition-colors disabled:opacity-30 disabled:cursor-not-allowed z-10"
+            title="Save to History"
+          >
+            <StarIcon className="w-5 h-5" />
+          </button>
+        )}
       </div>
 
       {/* Actions Bar */}
