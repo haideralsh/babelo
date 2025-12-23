@@ -1,5 +1,3 @@
-"use client";
-
 import * as Headless from "@headlessui/react";
 import clsx from "clsx";
 import { useState } from "react";
@@ -39,12 +37,7 @@ export function Combobox<T>({
         );
 
   return (
-    <Headless.Combobox
-      {...props}
-      multiple={false}
-      virtual={{ options: filteredOptions }}
-      onClose={() => setQuery("")}
-    >
+    <Headless.Combobox {...props} multiple={false} onClose={() => setQuery("")}>
       <span
         data-slot="control"
         className={clsx([
@@ -131,7 +124,7 @@ export function Combobox<T>({
           "transition-opacity duration-100 ease-in data-closed:data-leave:opacity-0 data-transition:pointer-events-none"
         )}
       >
-        {({ option }) => children(option)}
+        {filteredOptions.map((option) => children(option as NonNullable<T>))}
       </Headless.ComboboxOptions>
     </Headless.Combobox>
   );
