@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Textarea } from "./ui/textarea";
 import { VoiceSplitButton } from "./VoiceSplitButton";
-import { CopyIcon, CheckIcon, StarIcon } from "./icons";
+import { CopyIcon, CheckIcon, StarOutlineIcon, StarFilledIcon } from "./icons";
 import type { Voice } from "../hooks/useSpeechSynthesis";
 
 export interface TranslationPanelProps {
@@ -21,6 +21,7 @@ export interface TranslationPanelProps {
   ttsSupported?: boolean;
   onSave?: () => void;
   saveDisabled?: boolean;
+  isStarred?: boolean;
 }
 
 export function TranslationPanel({
@@ -40,6 +41,7 @@ export function TranslationPanel({
   ttsSupported = false,
   onSave,
   saveDisabled = true,
+  isStarred = false,
 }: TranslationPanelProps) {
   const [copied, setCopied] = useState(false);
 
@@ -50,11 +52,9 @@ export function TranslationPanel({
     setTimeout(() => setCopied(false), 2000);
   };
 
-  const characterCount = value.length;
-
   return (
     <div
-      className={`relative bg-white border border-zinc-200 flex flex-col ${
+      className={`relative bg-white flex flex-col ${
         readOnly ? "bg-zinc-50" : ""
       }`}
     >
@@ -77,13 +77,17 @@ export function TranslationPanel({
             className="absolute top-2 right-2 p-1.5 text-amber-400 hover:text-amber-500 transition-colors disabled:opacity-30 disabled:cursor-not-allowed z-10"
             title="Save to History"
           >
-            <StarIcon className="w-5 h-5" />
+            {isStarred ? (
+              <StarFilledIcon className="w-5 h-5" />
+            ) : (
+              <StarOutlineIcon className="w-5 h-5" />
+            )}
           </button>
         )}
       </div>
 
       {/* Actions Bar */}
-      <div className="flex items-center justify-between px-4 py-2 border-t border-zinc-200 bg-zinc-50/50">
+      <div className="flex items-center justify-between px-4 py-2 bg-zinc-50/50">
         <div className="flex items-center gap-2">
           {ttsSupported && (
             <VoiceSplitButton
@@ -110,9 +114,6 @@ export function TranslationPanel({
             )}
           </button>
         </div>
-        {isSource && (
-          <span className="text-xs text-zinc-500">{characterCount} / 5000</span>
-        )}
       </div>
     </div>
   );
