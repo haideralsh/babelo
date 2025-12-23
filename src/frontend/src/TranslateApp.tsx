@@ -1,10 +1,12 @@
 import { useState, useEffect, useRef } from "react";
 import { LanguageSelector, type Language } from "./components/LanguageSelector";
 import { useSpeechSynthesis } from "./hooks/useSpeechSynthesis";
-import { Button } from "./components/ui/button";
 import { TranslationPanel } from "./components/TranslationPanel";
 import { type HistoryItemData } from "./components/HistoryItem";
-import { HistorySidebar } from "./components/HistorySidebar";
+import {
+  HistorySidebar,
+  type HistorySidebarRef,
+} from "./components/HistorySidebar";
 import { getRecentLanguages, addRecentLanguage } from "./utils/languageStorage";
 import {
   API_BASE_URL,
@@ -12,12 +14,6 @@ import {
   LS_SOURCE_LANGS_KEY,
   LS_TARGET_LANGS_KEY,
 } from "./utils/constants";
-import {
-  Alert,
-  AlertTitle,
-  AlertDescription,
-  AlertActions,
-} from "./components/ui/alert";
 import {
   LanguagesIcon,
   ArrowRightLeftIcon,
@@ -32,10 +28,9 @@ export function TranslatorApp() {
   const [targetLanguage, setTargetLanguageState] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
-  const [history, setHistory] = useState<HistoryItemData[]>([]);
-  const [showClearConfirm, setShowClearConfirm] = useState(false);
   const [isSwapRotating, setIsSwapRotating] = useState(false);
   const [showHistorySidebar, setShowHistorySidebar] = useState(false);
+  const historySidebarRef = useRef<HistorySidebarRef>(null);
   const abortControllerRef = useRef<AbortController | null>(null);
 
   const { speak, stop, speaking, getVoicesForLanguage, isLanguageSupported } =
@@ -295,40 +290,7 @@ export function TranslatorApp() {
     setTranslatedText(tempText);
   };
 
-  const fetchHistory = async () => {
-    try {
-      const response = await fetch(`${API_BASE_URL}/history`);
-      if (!response.ok) return;
-      const data = await response.json();
-      // Map API response to HistoryItemData format
-      const items: HistoryItemData[] = data.items.map(
-        (item: {
-          id: string;
-          source_text: string;
-          translated_text: string;
-          source_lang: string;
-          target_lang: string;
-          timestamp: string;
-        }) => ({
-          id: item.id,
-          sourceText: item.source_text,
-          translatedText: item.translated_text,
-          sourceLang: item.source_lang,
-          targetLang: item.target_lang,
-          timestamp: item.timestamp,
-        })
-      );
-      setHistory(items);
-    } catch (err) {
-      console.error("Error fetching history:", err);
-    }
-  };
-
-  useEffect(() => {
-    fetchHistory();
-  }, []);
-
-  const handleTranslate = async () => {
+  const handleSaveToHistory = async () => {
     if (!inputText.trim() || !translatedText.trim()) return;
 
     try {
@@ -344,32 +306,10 @@ export function TranslatorApp() {
           target_lang: targetLanguage,
         }),
       });
-      // Refresh the history list
-      await fetchHistory();
+      // Refresh the history list in the sidebar
+      historySidebarRef.current?.refreshHistory();
     } catch (err) {
       console.error("Error saving history:", err);
-    }
-  };
-
-  const handleClearHistory = async () => {
-    try {
-      await fetch(`${API_BASE_URL}/history`, {
-        method: "DELETE",
-      });
-      setHistory([]);
-    } catch (err) {
-      console.error("Error clearing history:", err);
-    }
-  };
-
-  const handleDeleteHistoryItem = async (id: string) => {
-    try {
-      await fetch(`${API_BASE_URL}/history/${id}`, {
-        method: "DELETE",
-      });
-      setHistory(history.filter((item) => item.id !== id));
-    } catch (err) {
-      console.error("Error deleting history item:", err);
     }
   };
 
@@ -439,7 +379,7 @@ export function TranslatorApp() {
           </div>
 
           {/* Translation Panels */}
-          <div className="grid md:grid-cols-2 gap-14 mb-4">
+          <div className="grid md:grid-cols-2 gap-px mb-4">
             <TranslationPanel
               value={inputText}
               onChange={setInputText}
@@ -456,7 +396,7 @@ export function TranslatorApp() {
               onStop={stop}
               speaking={speakingPanel === "source"}
               ttsSupported={sourceTtsSupported}
-              onSave={handleTranslate}
+              onSave={handleSaveToHistory}
               saveDisabled={!inputText.trim() || !translatedText.trim()}
             />
 
@@ -493,48 +433,16 @@ export function TranslatorApp() {
             >
               <ClockIcon className="w-5 h-5" />
               <span className="font-medium">History</span>
-              {history.length > 0 && (
-                <span className="flex items-center justify-center min-w-5 h-5 px-1.5 bg-blue-500 text-white text-xs font-semibold">
-                  {history.length}
-                </span>
-              )}
             </button>
           </div>
-
-          <Alert
-            open={showClearConfirm}
-            onClose={() => setShowClearConfirm(false)}
-          >
-            <AlertTitle>Clear all history?</AlertTitle>
-            <AlertDescription>
-              This will permanently delete all your translation history. This
-              action cannot be undone.
-            </AlertDescription>
-            <AlertActions>
-              <Button plain onClick={() => setShowClearConfirm(false)}>
-                Cancel
-              </Button>
-              <Button
-                color="red"
-                onClick={() => {
-                  handleClearHistory();
-                  setShowClearConfirm(false);
-                }}
-              >
-                Clear All
-              </Button>
-            </AlertActions>
-          </Alert>
         </div>
       </main>
 
       <HistorySidebar
+        ref={historySidebarRef}
         open={showHistorySidebar}
         onClose={() => setShowHistorySidebar(false)}
-        history={history}
         onHistoryItemClick={handleHistoryItemClick}
-        onDeleteHistoryItem={handleDeleteHistoryItem}
-        onClearAll={() => setShowClearConfirm(true)}
         getLanguageName={getLanguageName}
       />
     </div>
