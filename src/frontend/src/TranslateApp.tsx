@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useMemo } from "react";
 import { LanguageSelector, type Language } from "./components/LanguageSelector";
 import { useSpeechSynthesis } from "./hooks/useSpeechSynthesis";
 import { TranslationPanel } from "./components/TranslationPanel";
@@ -34,6 +34,8 @@ export function TranslatorApp() {
   const historySidebarRef = useRef<HistorySidebarRef>(null);
   const abortControllerRef = useRef<AbortController | null>(null);
   const starCheckControllerRef = useRef<AbortController | null>(null);
+  const loadedSourceVoiceLangsRef = useRef<Set<string>>(new Set());
+  const loadedTargetVoiceLangsRef = useRef<Set<string>>(new Set());
 
   const { speak, stop, speaking, getVoicesForLanguage, isLanguageSupported } =
     useSpeechSynthesis();
@@ -55,8 +57,15 @@ export function TranslatorApp() {
   const [targetVoice, setTargetVoiceState] =
     useState<SpeechSynthesisVoice | null>(null);
 
-  const sourceVoices = getVoicesForLanguage(sourceLanguage);
-  const targetVoices = getVoicesForLanguage(targetLanguage);
+  // Memoize voice arrays to prevent unnecessary effect re-runs on every keystroke
+  const sourceVoices = useMemo(
+    () => getVoicesForLanguage(sourceLanguage),
+    [getVoicesForLanguage, sourceLanguage]
+  );
+  const targetVoices = useMemo(
+    () => getVoicesForLanguage(targetLanguage),
+    [getVoicesForLanguage, targetLanguage]
+  );
   const sourceTtsSupported = isLanguageSupported(sourceLanguage);
   const targetTtsSupported = isLanguageSupported(targetLanguage);
 
@@ -109,7 +118,20 @@ export function TranslatorApp() {
   useEffect(() => {
     if (sourceVoices.length === 0 || !sourceLanguage) return;
 
+    // Skip if we've already loaded preferences for this language
+    if (loadedSourceVoiceLangsRef.current.has(sourceLanguage)) {
+      // Still need to ensure a valid voice is selected if current one is invalid
+      if (
+        !sourceVoice ||
+        !sourceVoices.some((v) => v.voice.name === sourceVoice.name)
+      ) {
+        setSourceVoiceState(sourceVoices[0].voice);
+      }
+      return;
+    }
+
     const loadSavedVoice = async () => {
+      loadedSourceVoiceLangsRef.current.add(sourceLanguage);
       const savedVoiceName = await loadVoicePreference(sourceLanguage);
       if (savedVoiceName) {
         const savedVoice = sourceVoices.find(
@@ -136,7 +158,20 @@ export function TranslatorApp() {
   useEffect(() => {
     if (targetVoices.length === 0 || !targetLanguage) return;
 
+    // Skip if we've already loaded preferences for this language
+    if (loadedTargetVoiceLangsRef.current.has(targetLanguage)) {
+      // Still need to ensure a valid voice is selected if current one is invalid
+      if (
+        !targetVoice ||
+        !targetVoices.some((v) => v.voice.name === targetVoice.name)
+      ) {
+        setTargetVoiceState(targetVoices[0].voice);
+      }
+      return;
+    }
+
     const loadSavedVoice = async () => {
+      loadedTargetVoiceLangsRef.current.add(targetLanguage);
       const savedVoiceName = await loadVoicePreference(targetLanguage);
       if (savedVoiceName) {
         const savedVoice = targetVoices.find(
