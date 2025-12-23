@@ -70,11 +70,10 @@ export function TranslationPanel({
           className="border-0"
         />
         {/* Save to History Button - inside textarea area */}
-        {isSource && onSave && (
+        {isSource && onSave && !saveDisabled && (
           <button
             type="button"
             onClick={onSave}
-            disabled={saveDisabled}
             className="absolute top-2 right-2 p-1.5 text-amber-400 hover:text-amber-500 transition-colors disabled:opacity-30 disabled:cursor-not-allowed z-10"
             title="Save to History"
           >
@@ -96,11 +95,6 @@ export function TranslationPanel({
               speaking={speaking}
               disabled={!value}
             />
-          )}
-          {!ttsSupported && (
-            <span className="text-xs text-zinc-400 italic">
-              Text-to-speech not available for this language
-            </span>
           )}
           <button
             type="button"
