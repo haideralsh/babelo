@@ -45,7 +45,7 @@ export function Combobox<T>({
           // Basic layout
           "relative block w-full",
           // Background color + shadow applied to inset pseudo element, so shadow blends with border in light mode
-          "before:absolute before:inset-px before:rounded-[calc(var(--radius-lg)-1px)] before:bg-white before:shadow-sm",
+          "before:absolute before:inset-px before:rounded-[calc(var(--radius-lg)-1px)] before:bg-white",
           // Focus ring
           "after:pointer-events-none after:absolute after:inset-0 after:rounded-lg after:ring-transparent after:ring-inset sm:focus-within:after:ring-2 sm:focus-within:after:ring-blue-500",
           // Disabled state
@@ -71,15 +71,15 @@ export function Combobox<T>({
             // Typography
             "text-base/6 text-zinc-950 placeholder:text-zinc-500 sm:text-sm/6",
             // Border
-            "border border-zinc-950/10 data-hover:border-zinc-950/20",
+            "border-none",
             // Background color
             "bg-transparent",
             // Hide default focus styles
             "focus:outline-hidden",
             // Invalid state
-            "data-invalid:border-red-500 data-invalid:data-hover:border-red-500",
+            "data-invalid:border-red-500",
             // Disabled state
-            "data-disabled:border-zinc-950/20",
+            "data-disabled:opacity-50",
           ])}
         />
         <Headless.ComboboxButton className="group absolute inset-y-0 right-0 flex items-center px-2">

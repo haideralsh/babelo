@@ -37,15 +37,15 @@ export const Textarea = forwardRef(function Textarea(
           // Typography
           "text-base/6 text-zinc-950 placeholder:text-zinc-500 sm:text-sm/6",
           // Border
-          "border border-zinc-950/10 data-hover:border-zinc-950/20",
+          "border-none",
           // Background color
           "bg-transparent",
           // Hide default focus styles
           "focus:outline-hidden",
           // Invalid state
-          "data-invalid:border-red-500 data-invalid:data-hover:border-red-500",
+          "data-invalid:border-red-500",
           // Disabled state
-          "disabled:border-zinc-950/20",
+          "disabled:opacity-50",
           // Resizable
           resizable ? "resize-y" : "resize-none",
         ])}
