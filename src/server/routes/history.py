@@ -41,6 +41,37 @@ class DeleteResponse(BaseModel):
     message: str
 
 
+class HistoryCheckResponse(BaseModel):
+    """Response model for checking if a history item exists."""
+
+    exists: bool
+    id: str | None = None
+
+
+@router.get("/check", response_model=HistoryCheckResponse)
+async def check_history(
+    source_text: str,
+    source_lang: str,
+    target_lang: str,
+) -> HistoryCheckResponse:
+    """Check if a translation already exists in history.
+
+    Returns whether the entry exists and its ID if found.
+    """
+    manager = get_history_manager()
+
+    existing = manager.find_by_content(
+        source_text=source_text,
+        source_lang=source_lang,
+        target_lang=target_lang,
+    )
+
+    if existing:
+        return HistoryCheckResponse(exists=True, id=existing.id)
+
+    return HistoryCheckResponse(exists=False)
+
+
 @router.get("", response_model=HistoryListResponse)
 async def list_history() -> HistoryListResponse:
     """List all translation history items.

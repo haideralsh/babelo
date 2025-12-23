@@ -30,8 +30,10 @@ export function TranslatorApp() {
   const [error, setError] = useState("");
   const [isSwapRotating, setIsSwapRotating] = useState(false);
   const [showHistorySidebar, setShowHistorySidebar] = useState(false);
+  const [isStarred, setIsStarred] = useState(false);
   const historySidebarRef = useRef<HistorySidebarRef>(null);
   const abortControllerRef = useRef<AbortController | null>(null);
+  const starCheckControllerRef = useRef<AbortController | null>(null);
 
   const { speak, stop, speaking, getVoicesForLanguage, isLanguageSupported } =
     useSpeechSynthesis();
@@ -279,6 +281,52 @@ export function TranslatorApp() {
     };
   }, [inputText, sourceLanguage, targetLanguage]);
 
+  // Check if translation is starred (in history)
+  useEffect(() => {
+    if (!inputText.trim() || !sourceLanguage || !targetLanguage) {
+      setIsStarred(false);
+      return;
+    }
+
+    // Cancel any pending check request
+    if (starCheckControllerRef.current) {
+      starCheckControllerRef.current.abort();
+    }
+
+    starCheckControllerRef.current = new AbortController();
+
+    const checkStarred = async () => {
+      try {
+        const params = new URLSearchParams({
+          source_text: inputText,
+          source_lang: sourceLanguage,
+          target_lang: targetLanguage,
+        });
+        const response = await fetch(
+          `${API_BASE_URL}/history/check?${params}`,
+          { signal: starCheckControllerRef.current?.signal }
+        );
+
+        if (response.ok) {
+          const data = await response.json();
+          setIsStarred(data.exists);
+        }
+      } catch (err) {
+        if (err instanceof Error && err.name === "AbortError") {
+          return;
+        }
+        // Silently fail - default to not starred
+      }
+    };
+
+    // Small delay to avoid excessive checks while typing
+    const timeoutId = setTimeout(checkStarred, 300);
+
+    return () => {
+      clearTimeout(timeoutId);
+    };
+  }, [inputText, sourceLanguage, targetLanguage]);
+
   const handleSwapLanguages = () => {
     const tempLang = sourceLanguage;
     setSourceLanguage(targetLanguage);
@@ -306,7 +354,8 @@ export function TranslatorApp() {
           target_lang: targetLanguage,
         }),
       });
-      // Refresh the history list in the sidebar
+      // Mark as starred and refresh the history list in the sidebar
+      setIsStarred(true);
       historySidebarRef.current?.refreshHistory();
     } catch (err) {
       console.error("Error saving history:", err);
@@ -398,6 +447,7 @@ export function TranslatorApp() {
               ttsSupported={sourceTtsSupported}
               onSave={handleSaveToHistory}
               saveDisabled={!inputText.trim() || !translatedText.trim()}
+              isStarred={isStarred}
             />
 
             <TranslationPanel

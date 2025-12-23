@@ -58,7 +58,6 @@ export function TranslationPanel({
         readOnly ? "bg-zinc-50" : ""
       }`}
     >
-      {/* Text Area */}
       <div className="relative flex-1">
         <Textarea
           value={value}
@@ -69,7 +68,6 @@ export function TranslationPanel({
           rows={8}
           className="border-0"
         />
-        {/* Save to History Button - inside textarea area */}
         {isSource && onSave && !saveDisabled && (
           <button
             type="button"
@@ -86,7 +84,6 @@ export function TranslationPanel({
         )}
       </div>
 
-      {/* Actions Bar */}
       <div className="flex items-center justify-between px-4 py-2 bg-zinc-50/50">
         <div className="flex items-center gap-2">
           {ttsSupported && (
