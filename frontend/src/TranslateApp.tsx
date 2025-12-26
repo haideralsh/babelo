@@ -3,10 +3,6 @@ import { LanguageSelector, type Language } from "./components/LanguageSelector";
 import { useSpeechSynthesis } from "./hooks/useSpeechSynthesis";
 import { TranslationPanel } from "./components/TranslationPanel";
 import { type HistoryItemData } from "./components/HistoryItem";
-import {
-  HistorySidebar,
-  type HistorySidebarRef,
-} from "./components/HistorySidebar";
 import { getRecentLanguages, addRecentLanguage } from "./utils/languageStorage";
 import {
   API_BASE_URL,
@@ -19,6 +15,10 @@ import {
   ArrowRightLeftIcon,
   ClockIcon,
 } from "./components/icons";
+import {
+  HistorySidebar,
+  type HistorySidebarRef,
+} from "./components/HistorySidebar";
 
 export function TranslatorApp() {
   const [inputText, setInputText] = useState("");
@@ -40,12 +40,10 @@ export function TranslatorApp() {
   const { speak, stop, speaking, getVoicesForLanguage, isLanguageSupported } =
     useSpeechSynthesis();
 
-  // Track which panel is currently speaking
   const [speakingPanel, setSpeakingPanel] = useState<
     "source" | "target" | null
   >(null);
 
-  // Reset speakingPanel when speech stops
   useEffect(() => {
     if (!speaking) {
       setSpeakingPanel(null);
@@ -57,7 +55,6 @@ export function TranslatorApp() {
   const [targetVoice, setTargetVoiceState] =
     useState<SpeechSynthesisVoice | null>(null);
 
-  // Memoize voice arrays to prevent unnecessary effect re-runs on every keystroke
   const sourceVoices = useMemo(
     () => getVoicesForLanguage(sourceLanguage),
     [getVoicesForLanguage, sourceLanguage]
@@ -69,7 +66,6 @@ export function TranslatorApp() {
   const sourceTtsSupported = isLanguageSupported(sourceLanguage);
   const targetTtsSupported = isLanguageSupported(targetLanguage);
 
-  // Helper functions for voice preference API
   const saveVoicePreference = async (langCode: string, voiceName: string) => {
     try {
       await fetch(`${API_BASE_URL}/preferences/voice_preference:${langCode}`, {
@@ -99,7 +95,6 @@ export function TranslatorApp() {
     return null;
   };
 
-  // Wrapper setters that save voice preference to database
   const setSourceVoice = (voice: SpeechSynthesisVoice | null) => {
     setSourceVoiceState(voice);
     if (voice && sourceLanguage) {
@@ -114,13 +109,10 @@ export function TranslatorApp() {
     }
   };
 
-  // Load saved voice preference when source language changes
   useEffect(() => {
     if (sourceVoices.length === 0 || !sourceLanguage) return;
 
-    // Skip if we've already loaded preferences for this language
     if (loadedSourceVoiceLangsRef.current.has(sourceLanguage)) {
-      // Still need to ensure a valid voice is selected if current one is invalid
       if (
         !sourceVoice ||
         !sourceVoices.some((v) => v.voice.name === sourceVoice.name)
@@ -154,13 +146,10 @@ export function TranslatorApp() {
     loadSavedVoice();
   }, [sourceLanguage, sourceVoices]);
 
-  // Load saved voice preference when target language changes
   useEffect(() => {
     if (targetVoices.length === 0 || !targetLanguage) return;
 
-    // Skip if we've already loaded preferences for this language
     if (loadedTargetVoiceLangsRef.current.has(targetLanguage)) {
-      // Still need to ensure a valid voice is selected if current one is invalid
       if (
         !targetVoice ||
         !targetVoices.some((v) => v.voice.name === targetVoice.name)
@@ -193,7 +182,6 @@ export function TranslatorApp() {
     loadSavedVoice();
   }, [targetLanguage, targetVoices]);
 
-  // Wrapper setters that persist to localStorage
   const setSourceLanguage = (code: string) => {
     setSourceLanguageState(code);
     if (code) addRecentLanguage(LS_SOURCE_LANGS_KEY, code);
@@ -204,7 +192,6 @@ export function TranslatorApp() {
     if (code) addRecentLanguage(LS_TARGET_LANGS_KEY, code);
   };
 
-  // Fetch languages on component mount
   useEffect(() => {
     const fetchLanguages = async () => {
       try {
@@ -302,7 +289,7 @@ export function TranslatorApp() {
         setTranslatedText(data.translated_text);
       } catch (err) {
         if (err instanceof Error && err.name === "AbortError") {
-          return; // Ignore aborted requests
+          return;
         }
         setError(err instanceof Error ? err.message : "Translation failed");
         console.error("Error translating:", err);
@@ -316,14 +303,12 @@ export function TranslatorApp() {
     };
   }, [inputText, sourceLanguage, targetLanguage]);
 
-  // Check if translation is starred (in history)
   useEffect(() => {
     if (!inputText.trim() || !sourceLanguage || !targetLanguage) {
       setIsStarred(false);
       return;
     }
 
-    // Cancel any pending check request
     if (starCheckControllerRef.current) {
       starCheckControllerRef.current.abort();
     }
@@ -350,11 +335,9 @@ export function TranslatorApp() {
         if (err instanceof Error && err.name === "AbortError") {
           return;
         }
-        // Silently fail - default to not starred
       }
     };
 
-    // Small delay to avoid excessive checks while typing
     const timeoutId = setTimeout(checkStarred, 300);
 
     return () => {
@@ -367,7 +350,6 @@ export function TranslatorApp() {
     setSourceLanguage(targetLanguage);
     setTargetLanguage(tempLang);
 
-    // Swap the text as well
     const tempText = inputText;
     setInputText(translatedText);
     setTranslatedText(tempText);
@@ -389,7 +371,6 @@ export function TranslatorApp() {
           target_lang: targetLanguage,
         }),
       });
-      // Mark as starred and refresh the history list in the sidebar
       setIsStarred(true);
       historySidebarRef.current?.refreshHistory();
     } catch (err) {
@@ -413,8 +394,8 @@ export function TranslatorApp() {
       <main className="flex-1 min-w-0 h-full overflow-y-auto">
         <div className="max-w-5xl mx-auto px-4 py-8 md:py-12 pb-24">
           <header className="flex items-center gap-3 mb-8">
-            <div className="p-2 bg-blue-500/10">
-              <LanguagesIcon className="w-6 h-6 text-blue-600" />
+            <div className="p-2 bg-sky-3">
+              <LanguagesIcon className="w-6 h-6 text-sky-11" />
             </div>
             <h1 className="text-2xl font-semibold text-zinc-900">
               Bab Translator
@@ -443,7 +424,7 @@ export function TranslatorApp() {
                 handleSwapLanguages();
               }}
               disabled={loading}
-              className="p-2 text-zinc-500 hover:text-blue-500 hover:bg-blue-500/20 transition-colors shrink-0 mt-5 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="p-2 text-zinc-500 hover:text-sky-11 hover:bg-sky-4 transition-colors shrink-0 mt-5 disabled:opacity-50 disabled:cursor-not-allowed"
               aria-label="Swap languages"
             >
               <ArrowRightLeftIcon
@@ -462,7 +443,6 @@ export function TranslatorApp() {
             />
           </div>
 
-          {/* Translation Panels */}
           <div className="grid md:grid-cols-2 gap-px mb-4">
             <TranslationPanel
               value={inputText}

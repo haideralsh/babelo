@@ -25,7 +25,7 @@ export const Textarea = forwardRef(function Textarea(
         // Focus ring
         "after:pointer-events-none after:absolute after:inset-0 after:ring-transparent after:ring-inset sm:focus-within:after:ring-2 sm:focus-within:after:ring-blue-500",
         // Disabled state
-        "has-data-disabled:opacity-50 has-data-disabled:before:bg-zinc-950/5",
+        "has-data-disabled:opacity-90 has-data-disabled:before:bg-zinc-950/5",
       ])}
     >
       <Headless.Textarea
@@ -33,9 +33,9 @@ export const Textarea = forwardRef(function Textarea(
         {...props}
         className={clsx([
           // Basic layout
-          "relative block h-full w-full appearance-none px-[calc(--spacing(3.5)-1px)] py-[calc(--spacing(2.5)-1px)] sm:px-[calc(--spacing(3)-1px)] sm:py-[calc(--spacing(1.5)-1px)]",
+          "relative block h-full w-full appearance-none px-[calc(--spacing(3)-1px)] py-[calc(--spacing(3)-1px)] sm:px-[calc(--spacing(3)-1px)] sm:py-[calc(--spacing(3)-1px)]",
           // Typography
-          "text-base/6 text-zinc-950 placeholder:text-zinc-500 sm:text-sm/6",
+          "text-2xl text-zinc-950 placeholder:text-zinc-500",
           // Border
           "border-none",
           // Background color
@@ -45,7 +45,7 @@ export const Textarea = forwardRef(function Textarea(
           // Invalid state
           "data-invalid:border-red-500",
           // Disabled state
-          "disabled:opacity-50",
+          "disabled:opacity-90",
           // Resizable
           resizable ? "resize-y" : "resize-none",
         ])}
