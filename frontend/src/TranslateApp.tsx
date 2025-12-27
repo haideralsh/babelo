@@ -408,13 +408,12 @@ export function TranslatorApp() {
             </div>
           )}
 
-          <div className="flex items-center justify-between gap-3 mb-4">
+          <div className="flex items-center justify-between gap-2 mb-4">
             <LanguageSelector
               languages={languages}
               value={sourceLanguage}
               onChange={setSourceLanguage}
               label="From"
-              disabled={loading}
             />
 
             <button
@@ -423,8 +422,7 @@ export function TranslatorApp() {
                 setIsSwapRotating((r) => !r);
                 handleSwapLanguages();
               }}
-              disabled={loading}
-              className="p-2 text-zinc-500 hover:text-sky-11 hover:bg-sky-4 transition-colors shrink-0 mt-5 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="p-2 text-zinc-500 rounded-full hover:text-sky-11 hover:bg-sky-4 transition-colors shrink-0 mt-5 disabled:opacity-50 disabled:cursor-not-allowed"
               aria-label="Swap languages"
             >
               <ArrowRightLeftIcon
@@ -439,17 +437,15 @@ export function TranslatorApp() {
               value={targetLanguage}
               onChange={setTargetLanguage}
               label="To"
-              disabled={loading}
             />
           </div>
 
-          <div className="grid md:grid-cols-2 gap-px mb-4">
+          <div className="grid md:grid-cols-2 gap-4 mb-4">
             <TranslationPanel
               value={inputText}
               onChange={setInputText}
               placeholder="Enter text to translate..."
-              isSource
-              language={getLanguageName(sourceLanguage)}
+              isTarget={false}
               availableVoices={sourceVoices}
               selectedVoice={sourceVoice}
               onVoiceChange={setSourceVoice}
@@ -468,9 +464,8 @@ export function TranslatorApp() {
             <TranslationPanel
               value={translatedText}
               placeholder="Translation will appear here..."
+              isTarget={true}
               readOnly
-              language={getLanguageName(targetLanguage)}
-              loading={loading}
               availableVoices={targetVoices}
               selectedVoice={targetVoice}
               onVoiceChange={setTargetVoice}

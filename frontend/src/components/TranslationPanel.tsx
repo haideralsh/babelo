@@ -8,10 +8,8 @@ export interface TranslationPanelProps {
   value: string;
   onChange?: (value: string) => void;
   placeholder: string;
-  isSource?: boolean;
+  isTarget?: boolean;
   readOnly?: boolean;
-  language: string;
-  loading?: boolean;
   availableVoices: Voice[];
   selectedVoice: SpeechSynthesisVoice | null;
   onVoiceChange: (voice: SpeechSynthesisVoice | null) => void;
@@ -28,10 +26,8 @@ export function TranslationPanel({
   value,
   onChange,
   placeholder,
-  isSource = false,
+  isTarget = false,
   readOnly = false,
-  language: _language,
-  loading: _loading = false,
   availableVoices,
   selectedVoice,
   onVoiceChange,
@@ -65,10 +61,10 @@ export function TranslationPanel({
           placeholder={placeholder}
           disabled={readOnly}
           resizable={false}
-          rows={8}
+          rows={5}
           className="border-0"
         />
-        {isSource && onSave && !saveDisabled && (
+        {isTarget && onSave && !saveDisabled && (
           <button
             type="button"
             onClick={onSave}
