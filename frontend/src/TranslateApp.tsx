@@ -1,7 +1,8 @@
 import { useState, useEffect, useRef, useMemo } from "react";
 import { LanguageSelector, type Language } from "./components/LanguageSelector";
 import { useSpeechSynthesis } from "./hooks/useSpeechSynthesis";
-import { TranslationPanel } from "./components/TranslationPanel";
+import { SourcePanel } from "./components/SourcePanel";
+import { TargetPanel } from "./components/TargetPanel";
 import { type HistoryItemData } from "./components/HistoryItem";
 import { getRecentLanguages, addRecentLanguage } from "./utils/languageStorage";
 import {
@@ -31,6 +32,7 @@ export function TranslatorApp() {
   const [isSwapRotating, setIsSwapRotating] = useState(false);
   const [showHistorySidebar, setShowHistorySidebar] = useState(false);
   const [isStarred, setIsStarred] = useState(false);
+  const [starredItemId, setStarredItemId] = useState<string | null>(null);
   const historySidebarRef = useRef<HistorySidebarRef>(null);
   const abortControllerRef = useRef<AbortController | null>(null);
   const starCheckControllerRef = useRef<AbortController | null>(null);
@@ -306,6 +308,7 @@ export function TranslatorApp() {
   useEffect(() => {
     if (!inputText.trim() || !sourceLanguage || !targetLanguage) {
       setIsStarred(false);
+      setStarredItemId(null);
       return;
     }
 
@@ -330,6 +333,7 @@ export function TranslatorApp() {
         if (response.ok) {
           const data = await response.json();
           setIsStarred(data.exists);
+          setStarredItemId(data.id || null);
         }
       } catch (err) {
         if (err instanceof Error && err.name === "AbortError") {
@@ -359,7 +363,7 @@ export function TranslatorApp() {
     if (!inputText.trim() || !translatedText.trim()) return;
 
     try {
-      await fetch(`${API_BASE_URL}/history`, {
+      const response = await fetch(`${API_BASE_URL}/history`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -371,10 +375,27 @@ export function TranslatorApp() {
           target_lang: targetLanguage,
         }),
       });
+      const data = await response.json();
       setIsStarred(true);
+      setStarredItemId(data.id);
       historySidebarRef.current?.refreshHistory();
     } catch (err) {
       console.error("Error saving history:", err);
+    }
+  };
+
+  const handleUnsaveFromHistory = async () => {
+    if (!starredItemId) return;
+
+    try {
+      await fetch(`${API_BASE_URL}/history/${starredItemId}`, {
+        method: "DELETE",
+      });
+      setIsStarred(false);
+      setStarredItemId(null);
+      historySidebarRef.current?.refreshHistory();
+    } catch (err) {
+      console.error("Error unsaving from history:", err);
     }
   };
 
@@ -390,7 +411,7 @@ export function TranslatorApp() {
   };
 
   return (
-    <div className="flex h-screen bg-zinc-50 overflow-hidden">
+    <div className="flex h-screen bg-zinc-400 overflow-hidden">
       <main className="flex-1 min-w-0 h-full overflow-y-auto">
         <div className="max-w-5xl mx-auto px-4 py-8 md:py-12 pb-24">
           <header className="flex items-center gap-3 mb-8">
@@ -441,11 +462,10 @@ export function TranslatorApp() {
           </div>
 
           <div className="grid md:grid-cols-2 gap-4 mb-4">
-            <TranslationPanel
+            <SourcePanel
               value={inputText}
               onChange={setInputText}
               placeholder="Enter text to translate..."
-              isTarget={false}
               availableVoices={sourceVoices}
               selectedVoice={sourceVoice}
               onVoiceChange={setSourceVoice}
@@ -456,16 +476,11 @@ export function TranslatorApp() {
               onStop={stop}
               speaking={speakingPanel === "source"}
               ttsSupported={sourceTtsSupported}
-              onSave={handleSaveToHistory}
-              saveDisabled={!inputText.trim() || !translatedText.trim()}
-              isStarred={isStarred}
             />
 
-            <TranslationPanel
+            <TargetPanel
               value={translatedText}
               placeholder="Translation will appear here..."
-              isTarget={true}
-              readOnly
               availableVoices={targetVoices}
               selectedVoice={targetVoice}
               onVoiceChange={setTargetVoice}
@@ -476,6 +491,10 @@ export function TranslatorApp() {
               onStop={stop}
               speaking={speakingPanel === "target"}
               ttsSupported={targetTtsSupported}
+              onSave={handleSaveToHistory}
+              onUnsave={handleUnsaveFromHistory}
+              saveDisabled={!inputText.trim() || !translatedText.trim()}
+              isStarred={isStarred}
             />
           </div>
 

@@ -4,12 +4,9 @@ import { VoiceSplitButton } from "./VoiceSplitButton";
 import { CopyIcon, CheckIcon, StarOutlineIcon, StarFilledIcon } from "./icons";
 import type { Voice } from "../hooks/useSpeechSynthesis";
 
-export interface TranslationPanelProps {
+export interface TargetPanelProps {
   value: string;
-  onChange?: (value: string) => void;
   placeholder: string;
-  isTarget?: boolean;
-  readOnly?: boolean;
   availableVoices: Voice[];
   selectedVoice: SpeechSynthesisVoice | null;
   onVoiceChange: (voice: SpeechSynthesisVoice | null) => void;
@@ -23,12 +20,9 @@ export interface TranslationPanelProps {
   isStarred?: boolean;
 }
 
-export function TranslationPanel({
+export function TargetPanel({
   value,
-  onChange,
   placeholder,
-  isTarget = false,
-  readOnly = false,
   availableVoices,
   selectedVoice,
   onVoiceChange,
@@ -40,7 +34,7 @@ export function TranslationPanel({
   onUnsave,
   saveDisabled = true,
   isStarred = false,
-}: TranslationPanelProps) {
+}: TargetPanelProps) {
   const [copied, setCopied] = useState(false);
 
   const handleCopy = async () => {
@@ -51,32 +45,27 @@ export function TranslationPanel({
   };
 
   return (
-    <div
-      className={`relative bg-white flex flex-col ${
-        readOnly ? "bg-zinc-50" : ""
-      }`}
-    >
+    <div className="relative bg-zinc-50 flex flex-col">
       <div className="relative flex-1">
         <Textarea
           value={value}
-          onChange={(e) => onChange?.(e.target.value)}
           placeholder={placeholder}
-          disabled={readOnly}
+          disabled
           resizable={false}
           rows={5}
           className="border-0 bg-white/75 rounded-xl ring-1 ring-zinc-950/10"
         />
-        {isTarget && onSave && !saveDisabled && (
+        {onSave && !saveDisabled && (
           <button
             type="button"
             onClick={isStarred ? onUnsave : onSave}
-            className="absolute top-2 right-2 p-1.5 text-amber-400 hover:text-amber-500 transition-colors disabled:opacity-30 disabled:cursor-not-allowed z-10"
+            className="absolute top-2 right-2 p-1.5 transition-colors disabled:opacity-30 disabled:cursor-not-allowed z-10"
             title="Save to History"
           >
             {isStarred ? (
-              <StarFilledIcon className="w-5 h-5" />
+              <StarFilledIcon className="w-5 h-5 text-amber-400 hover:text-amber-500" />
             ) : (
-              <StarOutlineIcon className="w-5 h-5" />
+              <StarOutlineIcon className="w-5 h-5 text-zinc-400 hover:text-zinc-500" />
             )}
           </button>
         )}

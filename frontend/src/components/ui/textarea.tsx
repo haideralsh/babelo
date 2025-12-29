@@ -21,11 +21,12 @@ export const Textarea = forwardRef(function Textarea(
         // Basic layout
         "relative block w-full",
         // Background color + shadow applied to inset pseudo element, so shadow blends with border in light mode
-        "before:absolute before:inset-px before:bg-white",
+        "before:absolute before:inset-px before:rounded-[inherit] before:bg-white",
         // Focus ring
         // "after:pointer-events-none after:absolute after:inset-0 after:ring-transparent after:ring-inset sm:focus-within:after:ring-2 sm:focus-within:after:ring-blue-500",
         // Disabled state
         "has-data-disabled:opacity-90 has-data-disabled:before:bg-zinc-950/5",
+        "rounded-xl",
       ])}
     >
       <Headless.Textarea
@@ -35,7 +36,7 @@ export const Textarea = forwardRef(function Textarea(
           // Basic layout
           "relative block h-full w-full appearance-none px-[calc(--spacing(4)-1px)] py-[calc(--spacing(4)-1px)] sm:px-[calc(--spacing(4)-1px)] sm:py-[calc(--spacing(4)-1px)]",
           // Typography
-          "font-['Noto_Sans'] text-2xl text-zinc-950 placeholder:text-zinc-500",
+          "text-2xl text-zinc-950 placeholder:text-zinc-500",
           // Border
           "border-none",
           // Background color
