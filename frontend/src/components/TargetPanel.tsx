@@ -45,59 +45,54 @@ export function TargetPanel({
   };
 
   return (
-    <div className="relative bg-zinc-50 flex flex-col">
-      <div className="relative flex-1">
-        <Textarea
-          value={value}
-          placeholder={placeholder}
-          disabled
-          resizable={false}
-          rows={5}
-          className="border-0 bg-white/75 rounded-xl ring-1 ring-zinc-950/10"
-        />
-        {onSave && !saveDisabled && (
-          <button
-            type="button"
-            onClick={isStarred ? onUnsave : onSave}
-            className="absolute top-2 right-2 p-1.5 transition-colors disabled:opacity-30 disabled:cursor-not-allowed z-10"
-            title="Save to History"
-          >
-            {isStarred ? (
-              <StarFilledIcon className="w-5 h-5 text-amber-400 hover:text-amber-500" />
-            ) : (
-              <StarOutlineIcon className="w-5 h-5 text-zinc-400 hover:text-zinc-500" />
-            )}
-          </button>
-        )}
-      </div>
-
-      <div className="flex items-center justify-between px-4 py-2 bg-zinc-50/50">
-        <div className="flex items-center gap-2">
-          {ttsSupported && (
-            <VoiceSplitButton
-              voices={availableVoices}
-              selectedVoice={selectedVoice}
-              onVoiceChange={onVoiceChange}
-              onSpeak={onSpeak}
-              onStop={onStop}
-              speaking={speaking}
-              disabled={!value}
-            />
+    <div className="relative">
+      <Textarea
+        value={value}
+        placeholder={placeholder}
+        disabled
+        resizable={false}
+        rows={5}
+        className="border-0 bg-white/75 rounded-xl ring-1 ring-zinc-950/10 pb-12"
+      />
+      {onSave && !saveDisabled && (
+        <button
+          type="button"
+          onClick={isStarred ? onUnsave : onSave}
+          className="absolute top-2 right-2 p-1.5 transition-colors disabled:opacity-30 disabled:cursor-not-allowed z-10"
+          title="Save to History"
+        >
+          {isStarred ? (
+            <StarFilledIcon className="w-5 h-5 text-amber-400 hover:text-amber-500" />
+          ) : (
+            <StarOutlineIcon className="w-5 h-5 text-zinc-400 hover:text-zinc-500" />
           )}
-          <button
-            type="button"
-            onClick={handleCopy}
+        </button>
+      )}
+      <div className="absolute bottom-2 left-2 flex items-center gap-2">
+        {ttsSupported && (
+          <VoiceSplitButton
+            voices={availableVoices}
+            selectedVoice={selectedVoice}
+            onVoiceChange={onVoiceChange}
+            onSpeak={onSpeak}
+            onStop={onStop}
+            speaking={speaking}
             disabled={!value}
-            className="h-8 w-8 p-0 inline-flex items-center justify-center text-zinc-500 hover:text-zinc-900 hover:bg-zinc-100 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
-            aria-label="Copy"
-          >
-            {copied ? (
-              <CheckIcon className="w-4 h-4 text-blue-500" />
-            ) : (
-              <CopyIcon className="w-4 h-4" />
-            )}
-          </button>
-        </div>
+          />
+        )}
+        <button
+          type="button"
+          onClick={handleCopy}
+          disabled={!value}
+          className="h-8 w-8 p-0 inline-flex items-center justify-center text-zinc-500 hover:text-zinc-900 hover:bg-zinc-100 rounded-md disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+          aria-label="Copy"
+        >
+          {copied ? (
+            <CheckIcon className="w-4 h-4 text-blue-500" />
+          ) : (
+            <CopyIcon className="w-4 h-4" />
+          )}
+        </button>
       </div>
     </div>
   );
