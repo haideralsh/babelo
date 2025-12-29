@@ -411,7 +411,7 @@ export function TranslatorApp() {
   };
 
   return (
-    <div className="flex h-screen bg-zinc-50 overflow-hidden">
+    <div className="flex h-screen bg-white overflow-hidden">
       <main className="flex-1 min-w-0 h-full overflow-y-auto">
         <div className="max-w-5xl mx-auto px-4 py-8 md:py-12 pb-24">
           <header className="flex items-center gap-3 mb-8">

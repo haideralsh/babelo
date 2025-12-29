@@ -52,7 +52,7 @@ export function TargetPanel({
         disabled
         resizable={false}
         rows={5}
-        className="border-0 bg-white/75 rounded-xl ring-1 ring-zinc-950/10 pb-12"
+        className="border-0 bg-white/75 rounded-xl pb-12"
       />
       {onSave && !saveDisabled && (
         <button

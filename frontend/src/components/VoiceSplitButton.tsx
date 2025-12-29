@@ -2,6 +2,7 @@ import * as Headless from "@headlessui/react";
 import clsx from "clsx";
 import { VolumeIcon, StopIcon } from "./icons";
 import type { Voice } from "../hooks/useSpeechSynthesis";
+import { ListboxOption, ListboxLabel, ListboxDescription } from "./ui/listbox";
 
 interface VoiceSplitButtonProps {
   voices: Voice[];
@@ -37,11 +38,9 @@ export function VoiceSplitButton({
     <div className="relative">
       {/* Split Button Container */}
       <div
-        className={`inline-flex items-stretch border transition-colors ${
-          speaking
-            ? "border-red-200 bg-red-50"
-            : "border-zinc-200 bg-white hover:border-zinc-300"
-        } ${isDisabled ? "opacity-50 cursor-not-allowed" : ""}`}
+        className={`inline-flex items-stretch transition-colors ${
+          isDisabled ? "opacity-50 cursor-not-allowed" : ""
+        }`}
       >
         {/* Primary Action - Speak/Stop */}
         <button
@@ -50,8 +49,8 @@ export function VoiceSplitButton({
           disabled={isDisabled}
           className={`h-8 px-2.5 inline-flex items-center justify-center transition-colors ${
             speaking
-              ? "text-red-500 hover:text-red-600 hover:bg-red-100"
-              : "text-zinc-600 hover:text-zinc-900 hover:bg-zinc-100"
+              ? "text-red-500 hover:text-red-600"
+              : "text-zinc-600 hover:text-zinc-900"
           } disabled:cursor-not-allowed`}
           aria-label={speaking ? "Stop" : "Listen"}
         >
@@ -61,9 +60,6 @@ export function VoiceSplitButton({
             <VolumeIcon className="w-4 h-4" />
           )}
         </button>
-
-        {/* Divider */}
-        <div className={`w-px ${speaking ? "bg-red-200" : "bg-zinc-200"}`} />
 
         {/* Listbox Toggle */}
         <Headless.Listbox
@@ -76,8 +72,8 @@ export function VoiceSplitButton({
               "h-8 px-1.5 inline-flex items-center justify-center transition-colors",
               "focus:outline-none",
               speaking
-                ? "text-red-400 hover:text-red-500 hover:bg-red-100 data-open:bg-red-100"
-                : "text-zinc-400 hover:text-zinc-600 hover:bg-zinc-100 data-open:bg-zinc-100",
+                ? "text-red-400 hover:text-red-500"
+                : "text-zinc-400 hover:text-zinc-600",
               "disabled:cursor-not-allowed"
             )}
             aria-label="Select voice"
@@ -107,7 +103,7 @@ export function VoiceSplitButton({
               // Anchor positioning
               "[--anchor-gap:0.25rem] [--anchor-padding:--spacing(4)]",
               // Base styles
-              "isolate min-w-[180px] max-h-[240px] scroll-py-1 p-1 select-none",
+              "isolate min-w-[180px] max-h-[240px] scroll-py-1 rounded-xl p-1 select-none",
               // Invisible border that is only visible in `forced-colors` mode for accessibility purposes
               "outline outline-transparent focus:outline-hidden",
               // Handle scrolling when menu won't fit in viewport
@@ -127,37 +123,18 @@ export function VoiceSplitButton({
                 No voices available
               </div>
             ) : (
-              voices.map((voice) => (
-                <Headless.ListboxOption
-                  key={voice.voice.name}
-                  value={voice}
-                  className={clsx(
-                    // Basic layout
-                    "group/option grid cursor-default grid-cols-[--spacing(5)_1fr] items-baseline gap-x-2 py-2 pr-3 pl-2",
-                    // Typography
-                    "text-sm text-zinc-950",
-                    // Focus
-                    "outline-hidden data-focus:bg-blue-500 data-focus:text-white",
-                    // Selected without focus
-                    "data-selected:not-data-focus:bg-blue-50 data-selected:not-data-focus:text-blue-700"
-                  )}
-                >
-                  <svg
-                    className="relative hidden size-4 self-center stroke-current group-data-selected/option:inline"
-                    viewBox="0 0 16 16"
-                    fill="none"
-                    aria-hidden="true"
-                  >
-                    <path
-                      d="M4 8.5l3 3L12 4"
-                      strokeWidth={1.5}
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    />
-                  </svg>
-                  <span className="col-start-2 truncate">{voice.name}</span>
-                </Headless.ListboxOption>
-              ))
+              voices.map((voice) => {
+                // Extract just the voice name (before any parentheses)
+                const nameMatch = voice.name.match(/^([^(]+)/);
+                const cleanName = nameMatch ? nameMatch[1].trim() : voice.name;
+
+                return (
+                  <ListboxOption key={voice.voice.name} value={voice}>
+                    <ListboxLabel>{cleanName}</ListboxLabel>
+                    <ListboxDescription>{voice.lang}</ListboxDescription>
+                  </ListboxOption>
+                );
+              })
             )}
           </Headless.ListboxOptions>
         </Headless.Listbox>
