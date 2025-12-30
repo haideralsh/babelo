@@ -3,7 +3,7 @@ import { LanguageSelector, type Language } from "./components/LanguageSelector";
 import { useSpeechSynthesis } from "./hooks/useSpeechSynthesis";
 import { SourcePanel } from "./components/SourcePanel";
 import { TargetPanel } from "./components/TargetPanel";
-import { type HistoryItemData } from "./components/HistoryItem";
+import { type SavedTranslationData } from "./components/SavedTranslationItem";
 import { getRecentLanguages, addRecentLanguage } from "./utils/languageStorage";
 import {
   API_BASE_URL,
@@ -14,12 +14,9 @@ import {
 import {
   LanguagesIcon,
   ArrowRightLeftIcon,
-  ClockIcon,
+  StarFilledIcon,
 } from "./components/icons";
-import {
-  HistorySidebar,
-  type HistorySidebarRef,
-} from "./components/HistorySidebar";
+import { SavedSidebar, type SavedSidebarRef } from "./components/SavedSidebar";
 
 export function TranslatorApp() {
   const [inputText, setInputText] = useState("");
@@ -27,13 +24,13 @@ export function TranslatorApp() {
   const [languages, setLanguages] = useState<Language[]>([]);
   const [sourceLanguage, setSourceLanguageState] = useState("");
   const [targetLanguage, setTargetLanguageState] = useState("");
-  const [loading, setLoading] = useState(false);
+  const [_loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [isSwapRotating, setIsSwapRotating] = useState(false);
-  const [showHistorySidebar, setShowHistorySidebar] = useState(false);
+  const [showSavedSidebar, setShowSavedSidebar] = useState(false);
   const [isStarred, setIsStarred] = useState(false);
   const [starredItemId, setStarredItemId] = useState<string | null>(null);
-  const historySidebarRef = useRef<HistorySidebarRef>(null);
+  const savedSidebarRef = useRef<SavedSidebarRef>(null);
   const abortControllerRef = useRef<AbortController | null>(null);
   const starCheckControllerRef = useRef<AbortController | null>(null);
   const loadedSourceVoiceLangsRef = useRef<Set<string>>(new Set());
@@ -325,10 +322,9 @@ export function TranslatorApp() {
           source_lang: sourceLanguage,
           target_lang: targetLanguage,
         });
-        const response = await fetch(
-          `${API_BASE_URL}/history/check?${params}`,
-          { signal: starCheckControllerRef.current?.signal }
-        );
+        const response = await fetch(`${API_BASE_URL}/saved/check?${params}`, {
+          signal: starCheckControllerRef.current?.signal,
+        });
 
         if (response.ok) {
           const data = await response.json();
@@ -359,11 +355,11 @@ export function TranslatorApp() {
     setTranslatedText(tempText);
   };
 
-  const handleSaveToHistory = async () => {
+  const handleSaveTranslation = async () => {
     if (!inputText.trim() || !translatedText.trim()) return;
 
     try {
-      const response = await fetch(`${API_BASE_URL}/history`, {
+      const response = await fetch(`${API_BASE_URL}/saved`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -378,28 +374,28 @@ export function TranslatorApp() {
       const data = await response.json();
       setIsStarred(true);
       setStarredItemId(data.id);
-      historySidebarRef.current?.refreshHistory();
+      savedSidebarRef.current?.refreshSaved();
     } catch (err) {
-      console.error("Error saving history:", err);
+      console.error("Error saving translation:", err);
     }
   };
 
-  const handleUnsaveFromHistory = async () => {
+  const handleUnsaveTranslation = async () => {
     if (!starredItemId) return;
 
     try {
-      await fetch(`${API_BASE_URL}/history/${starredItemId}`, {
+      await fetch(`${API_BASE_URL}/saved/${starredItemId}`, {
         method: "DELETE",
       });
       setIsStarred(false);
       setStarredItemId(null);
-      historySidebarRef.current?.refreshHistory();
+      savedSidebarRef.current?.refreshSaved();
     } catch (err) {
-      console.error("Error unsaving from history:", err);
+      console.error("Error unsaving translation:", err);
     }
   };
 
-  const handleHistoryItemClick = (item: HistoryItemData) => {
+  const handleSavedItemClick = (item: SavedTranslationData) => {
     setSourceLanguage(item.sourceLang);
     setTargetLanguage(item.targetLang);
     setInputText(item.sourceText);
@@ -491,8 +487,8 @@ export function TranslatorApp() {
               onStop={stop}
               speaking={speakingPanel === "target"}
               ttsSupported={targetTtsSupported}
-              onSave={handleSaveToHistory}
-              onUnsave={handleUnsaveFromHistory}
+              onSave={handleSaveTranslation}
+              onUnsave={handleUnsaveTranslation}
               saveDisabled={!inputText.trim() || !translatedText.trim()}
               isStarred={isStarred}
             />
@@ -500,28 +496,28 @@ export function TranslatorApp() {
 
           <div
             className={`fixed bottom-6 right-6 transition-all duration-300 transform ${
-              showHistorySidebar
+              showSavedSidebar
                 ? "translate-x-20 opacity-0 pointer-events-none"
                 : "translate-x-0 opacity-100"
             }`}
           >
             <button
               type="button"
-              onClick={() => setShowHistorySidebar(true)}
+              onClick={() => setShowSavedSidebar(true)}
               className="flex items-center gap-2 px-4 py-3 bg-zinc-900 text-white shadow-lg hover:shadow-xl hover:scale-105 transition-all duration-200"
             >
-              <ClockIcon className="w-5 h-5" />
-              <span className="font-medium">History</span>
+              <StarFilledIcon className="w-5 h-5" />
+              <span className="font-medium">Saved</span>
             </button>
           </div>
         </div>
       </main>
 
-      <HistorySidebar
-        ref={historySidebarRef}
-        open={showHistorySidebar}
-        onClose={() => setShowHistorySidebar(false)}
-        onHistoryItemClick={handleHistoryItemClick}
+      <SavedSidebar
+        ref={savedSidebarRef}
+        open={showSavedSidebar}
+        onClose={() => setShowSavedSidebar(false)}
+        onSavedItemClick={handleSavedItemClick}
         getLanguageName={getLanguageName}
       />
     </div>

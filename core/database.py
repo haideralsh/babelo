@@ -4,10 +4,10 @@ from datetime import UTC, datetime
 from pathlib import Path
 from typing import NamedTuple
 
-DEFAULT_DB_PATH = Path.home() / ".cache" / "bab" / "history.db"
+DEFAULT_DB_PATH = Path.home() / ".cache" / "bab" / "saved_translations.db"
 
 
-class HistoryItem(NamedTuple):
+class SavedTranslation(NamedTuple):
     id: str
     source_text: str
     translated_text: str
@@ -16,9 +16,9 @@ class HistoryItem(NamedTuple):
     timestamp: str  # ISO 8601 format
 
 
-class HistoryManager:
+class SavedTranslationManager:
     def __init__(self, db_path: Path | str | None = None) -> None:
-        """Initialize the HistoryManager.
+        """Initialize the SavedTranslationManager.
 
         Args:
             db_path: Path to the SQLite database file. If None, uses the default path.
@@ -32,7 +32,7 @@ class HistoryManager:
 
         with self._get_connection() as conn:
             conn.execute("""
-                CREATE TABLE IF NOT EXISTS history (
+                CREATE TABLE IF NOT EXISTS saved_translations (
                     id TEXT PRIMARY KEY,
                     source_text TEXT NOT NULL,
                     translated_text TEXT NOT NULL,
@@ -53,8 +53,8 @@ class HistoryManager:
         translated_text: str,
         source_lang: str,
         target_lang: str,
-    ) -> HistoryItem:
-        """Create a new history entry.
+    ) -> SavedTranslation:
+        """Create a new saved translation entry.
 
         Args:
             source_text: The original text.
@@ -63,7 +63,7 @@ class HistoryManager:
             target_lang: Target language NLLB code.
 
         Returns:
-            The created HistoryItem.
+            The created SavedTranslation.
         """
         item_id = str(uuid.uuid4())
         timestamp = datetime.now(UTC).isoformat()
@@ -71,7 +71,7 @@ class HistoryManager:
         with self._get_connection() as conn:
             conn.execute(
                 """
-                INSERT INTO history (id, source_text, translated_text, source_lang, target_lang, timestamp)
+                INSERT INTO saved_translations (id, source_text, translated_text, source_lang, target_lang, timestamp)
                 VALUES (?, ?, ?, ?, ?, ?)
                 """,
                 (
@@ -85,7 +85,7 @@ class HistoryManager:
             )
             conn.commit()
 
-        return HistoryItem(
+        return SavedTranslation(
             id=item_id,
             source_text=source_text,
             translated_text=translated_text,
@@ -99,8 +99,8 @@ class HistoryManager:
         source_text: str,
         source_lang: str,
         target_lang: str,
-    ) -> HistoryItem | None:
-        """Find an existing history entry by source text and language pair.
+    ) -> SavedTranslation | None:
+        """Find an existing saved translation by source text and language pair.
 
         Args:
             source_text: The original text.
@@ -108,41 +108,41 @@ class HistoryManager:
             target_lang: Target language NLLB code.
 
         Returns:
-            The matching HistoryItem if found, None otherwise.
+            The matching SavedTranslation if found, None otherwise.
         """
         with self._get_connection() as conn:
             cursor = conn.execute(
                 """
                 SELECT id, source_text, translated_text, source_lang, target_lang, timestamp
-                FROM history
+                FROM saved_translations
                 WHERE source_text = ? AND source_lang = ? AND target_lang = ?
                 """,
                 (source_text, source_lang, target_lang),
             )
             row = cursor.fetchone()
 
-        return HistoryItem(*row) if row else None
+        return SavedTranslation(*row) if row else None
 
-    def list_all(self) -> list[HistoryItem]:
-        """List all history entries, sorted by timestamp (newest first).
+    def list_all(self) -> list[SavedTranslation]:
+        """List all saved translations, sorted by timestamp (newest first).
 
         Returns:
-            List of HistoryItem objects.
+            List of SavedTranslation objects.
         """
         with self._get_connection() as conn:
             cursor = conn.execute(
                 """
                 SELECT id, source_text, translated_text, source_lang, target_lang, timestamp
-                FROM history
+                FROM saved_translations
                 ORDER BY timestamp DESC
                 """
             )
             rows = cursor.fetchall()
 
-        return [HistoryItem(*row) for row in rows]
+        return [SavedTranslation(*row) for row in rows]
 
     def delete(self, item_id: str) -> bool:
-        """Delete a history entry by ID.
+        """Delete a saved translation by ID.
 
         Args:
             item_id: The ID of the entry to delete.
@@ -152,34 +152,34 @@ class HistoryManager:
         """
         with self._get_connection() as conn:
             cursor = conn.execute(
-                "DELETE FROM history WHERE id = ?",
+                "DELETE FROM saved_translations WHERE id = ?",
                 (item_id,),
             )
             conn.commit()
             return cursor.rowcount > 0
 
     def clear_all(self) -> int:
-        """Delete all history entries.
+        """Delete all saved translations.
 
         Returns:
             The number of entries deleted.
         """
         with self._get_connection() as conn:
-            cursor = conn.execute("DELETE FROM history")
+            cursor = conn.execute("DELETE FROM saved_translations")
             conn.commit()
             return cursor.rowcount
 
 
-_history_manager: HistoryManager | None = None
+_saved_translation_manager: SavedTranslationManager | None = None
 
 
-def get_history_manager() -> HistoryManager:
-    """Get the global HistoryManager instance.
+def get_saved_translation_manager() -> SavedTranslationManager:
+    """Get the global SavedTranslationManager instance.
 
     Returns:
-        The global HistoryManager singleton.
+        The global SavedTranslationManager singleton.
     """
-    global _history_manager
-    if _history_manager is None:
-        _history_manager = HistoryManager()
-    return _history_manager
+    global _saved_translation_manager
+    if _saved_translation_manager is None:
+        _saved_translation_manager = SavedTranslationManager()
+    return _saved_translation_manager

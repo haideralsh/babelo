@@ -59,7 +59,7 @@ export function TargetPanel({
           type="button"
           onClick={isStarred ? onUnsave : onSave}
           className="absolute top-2 right-2 p-1.5 transition-colors disabled:opacity-30 disabled:cursor-not-allowed z-10"
-          title="Save to History"
+          title="Save Translation"
         >
           {isStarred ? (
             <StarFilledIcon className="w-5 h-5 text-amber-400 hover:text-amber-500" />

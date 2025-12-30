@@ -1,10 +1,10 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from server.routes.history import router as history_router
 from server.routes.languages import router as languages_router
 from server.routes.model import router as model_router
 from server.routes.preferences import router as preferences_router
+from server.routes.saved import router as saved_router
 from server.routes.translate import router as translate_router
 
 app = FastAPI(
@@ -24,7 +24,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-app.include_router(history_router)
+app.include_router(saved_router)
 app.include_router(languages_router)
 app.include_router(model_router)
 app.include_router(preferences_router)

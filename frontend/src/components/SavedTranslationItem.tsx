@@ -1,7 +1,7 @@
 import { Badge } from "./ui/badge";
 import { ArrowRightIcon, XIcon } from "./icons";
 
-export interface HistoryItemData {
+export interface SavedTranslationData {
   id: string;
   sourceText: string;
   translatedText: string;
@@ -10,19 +10,19 @@ export interface HistoryItemData {
   timestamp: string;
 }
 
-interface HistoryItemProps {
-  item: HistoryItemData;
+interface SavedTranslationItemProps {
+  item: SavedTranslationData;
   getLanguageName: (code: string) => string;
   onClick: () => void;
   onDelete: () => void;
 }
 
-export function HistoryItem({
+export function SavedTranslationItem({
   item,
   getLanguageName,
   onClick,
   onDelete,
-}: HistoryItemProps) {
+}: SavedTranslationItemProps) {
   const formatTime = (timestamp: string) => {
     const date = new Date(timestamp);
     const now = new Date();

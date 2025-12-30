@@ -7,7 +7,7 @@ Offline neural machine translation between 200+ languages using Meta's NLLB-200 
 - **200+ Languages**: Support for major and low-resource languages
 - **Privacy-First**: Local translation inference
 - **Text-to-Speech**: Listen to translations in supported languages in the browser
-- **Translation History**: Save and revisit your translations
+- **Saved Translations**: Save and revisit your favorite translations
 - **CLI & Web Interface**: Use via terminal or web app
 - **Fast & Efficient**: Distilled 600M parameter model for speed
 
