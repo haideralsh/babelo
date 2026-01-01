@@ -5,6 +5,7 @@ import { SourcePanel } from "./components/SourcePanel";
 import { TargetPanel } from "./components/TargetPanel";
 import { type SavedTranslationData } from "./components/SavedTranslationItem";
 import { getRecentLanguages, addRecentLanguage } from "./utils/languageStorage";
+import { SavedSidebar, type SavedSidebarRef } from "./components/SavedSidebar";
 import {
   API_BASE_URL,
   DEBOUNCE_DELAY,
@@ -16,7 +17,6 @@ import {
   ArrowRightLeftIcon,
   StarFilledIcon,
 } from "./components/icons";
-import { SavedSidebar, type SavedSidebarRef } from "./components/SavedSidebar";
 
 export function TranslatorApp() {
   const [inputText, setInputText] = useState("");
@@ -242,7 +242,6 @@ export function TranslatorApp() {
     fetchLanguages();
   }, []);
 
-  // Auto-translate with debounce
   useEffect(() => {
     if (!inputText.trim()) {
       setTranslatedText("");
@@ -255,7 +254,6 @@ export function TranslatorApp() {
     }
 
     const timeoutId = setTimeout(async () => {
-      // Cancel any pending request
       if (abortControllerRef.current) {
         abortControllerRef.current.abort();
       }

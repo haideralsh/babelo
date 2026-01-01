@@ -8,7 +8,6 @@ interface OnboardingScreenProps {
   onComplete: () => void;
 }
 
-// Languages icon matching App.tsx
 const LanguagesIcon = ({ className }: { className?: string }) => (
   <svg
     className={className}
@@ -28,7 +27,6 @@ const LanguagesIcon = ({ className }: { className?: string }) => (
   </svg>
 );
 
-// Download icon
 const DownloadIcon = ({ className }: { className?: string }) => (
   <svg
     className={className}
@@ -45,7 +43,6 @@ const DownloadIcon = ({ className }: { className?: string }) => (
   </svg>
 );
 
-// Spinner icon
 const SpinnerIcon = ({ className }: { className?: string }) => (
   <svg className={className} viewBox="0 0 24 24" fill="none">
     <circle
@@ -84,7 +81,6 @@ export function OnboardingScreen({ onComplete }: OnboardingScreenProps) {
         throw new Error(errorData.detail || "Download failed");
       }
 
-      // Success - transition to app
       onComplete();
     } catch (err) {
       setDownloadState("error");
@@ -96,9 +92,7 @@ export function OnboardingScreen({ onComplete }: OnboardingScreenProps) {
 
   return (
     <div className="min-h-screen relative overflow-hidden flex items-center justify-center">
-      {/* Animated gradient background */}
       <div className="absolute inset-0  from-teal-950 via-slate-900 to-indigo-950">
-        {/* Animated orbs */}
         <motion.div
           className="absolute w-[600px] h-[600px] bg-teal-500/20 blur-3xl"
           animate={{
@@ -140,9 +134,7 @@ export function OnboardingScreen({ onComplete }: OnboardingScreenProps) {
         />
       </div>
 
-      {/* Content */}
       <div className="relative z-10 max-w-lg mx-auto px-6 text-center">
-        {/* Logo and title */}
         <motion.div
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
@@ -160,7 +152,6 @@ export function OnboardingScreen({ onComplete }: OnboardingScreenProps) {
           </p>
         </motion.div>
 
-        {/* Description */}
         <motion.p
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -171,7 +162,6 @@ export function OnboardingScreen({ onComplete }: OnboardingScreenProps) {
           required after setup. Your data stays private.
         </motion.p>
 
-        {/* Download section */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -216,7 +206,6 @@ export function OnboardingScreen({ onComplete }: OnboardingScreenProps) {
           </p>
         </motion.div>
 
-        {/* Footer */}
         <motion.p
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}

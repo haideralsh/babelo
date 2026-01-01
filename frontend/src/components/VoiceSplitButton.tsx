@@ -25,7 +25,6 @@ export function VoiceSplitButton({
 }: VoiceSplitButtonProps) {
   const isDisabled = disabled || voices.length === 0;
 
-  // Find the selected voice object from the voices array
   const selectedVoiceObj = voices.find(
     (v) => v.voice.name === selectedVoice?.name
   );
@@ -36,13 +35,11 @@ export function VoiceSplitButton({
 
   return (
     <div className="relative">
-      {/* Split Button Container */}
       <div
         className={`inline-flex items-stretch transition-colors ${
           isDisabled ? "opacity-50 cursor-not-allowed" : ""
         }`}
       >
-        {/* Primary Action - Speak/Stop */}
         <button
           type="button"
           onClick={speaking ? onStop : onSpeak}
@@ -61,7 +58,6 @@ export function VoiceSplitButton({
           )}
         </button>
 
-        {/* Listbox Toggle */}
         <Headless.Listbox
           value={selectedVoiceObj ?? null}
           onChange={handleVoiceChange}
@@ -100,21 +96,13 @@ export function VoiceSplitButton({
             transition
             anchor="bottom start"
             className={clsx(
-              // Anchor positioning
               "[--anchor-gap:0.25rem] [--anchor-padding:--spacing(4)]",
-              // Base styles
               "isolate min-w-[180px] max-h-[240px] scroll-py-1 rounded-xl p-1 select-none",
-              // Invisible border that is only visible in `forced-colors` mode for accessibility purposes
               "outline outline-transparent focus:outline-hidden",
-              // Handle scrolling when menu won't fit in viewport
               "overflow-y-auto overscroll-contain",
-              // Popover background
               "bg-white/75 backdrop-blur-xl",
-              // Shadows
               "shadow-lg ring-1 ring-zinc-950/10",
-              // Transitions
               "transition-opacity duration-100 ease-in data-closed:data-leave:opacity-0 data-transition:pointer-events-none",
-              // Z-index
               "z-50"
             )}
           >
@@ -124,7 +112,6 @@ export function VoiceSplitButton({
               </div>
             ) : (
               voices.map((voice) => {
-                // Extract just the voice name (before any parentheses)
                 const nameMatch = voice.name.match(/^([^(]+)/);
                 const cleanName = nameMatch ? nameMatch[1].trim() : voice.name;
 
