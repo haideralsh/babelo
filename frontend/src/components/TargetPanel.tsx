@@ -51,14 +51,14 @@ export function TargetPanel({
         placeholder={placeholder}
         disabled
         resizable={false}
-        rows={5}
-        className="border-0 bg-white/75 rounded-xl pb-12"
+        rows={3}
+        className="border-0 bg-white/75 rounded-xl pb-12 pr-10"
       />
       {onSave && !saveDisabled && (
         <button
           type="button"
           onClick={isStarred ? onUnsave : onSave}
-          className="absolute top-2 right-2 p-1.5 transition-colors disabled:opacity-30 disabled:cursor-not-allowed z-10"
+          className="absolute top-2 right-2 p-1.5 transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
           title="Save Translation"
         >
           {isStarred ? (

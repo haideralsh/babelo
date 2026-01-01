@@ -35,6 +35,12 @@ export function TranslatorApp() {
   const starCheckControllerRef = useRef<AbortController | null>(null);
   const loadedSourceVoiceLangsRef = useRef<Set<string>>(new Set());
   const loadedTargetVoiceLangsRef = useRef<Set<string>>(new Set());
+  const sourceTextareaRef = useRef<HTMLTextAreaElement>(null);
+
+  // Focus the source textarea on mount
+  useEffect(() => {
+    sourceTextareaRef.current?.focus();
+  }, []);
 
   const { speak, stop, speaking, getVoicesForLanguage, isLanguageSupported } =
     useSpeechSynthesis();
@@ -455,11 +461,11 @@ export function TranslatorApp() {
             />
           </div>
 
-          <div className="grid md:grid-cols-2 gap-4 mb-4">
+          <div className="grid md:grid-cols-2 gap-4 mb-8">
             <SourcePanel
+              ref={sourceTextareaRef}
               value={inputText}
               onChange={setInputText}
-              placeholder="Enter text to translate..."
               availableVoices={sourceVoices}
               selectedVoice={sourceVoice}
               onVoiceChange={setSourceVoice}
@@ -474,7 +480,7 @@ export function TranslatorApp() {
 
             <TargetPanel
               value={translatedText}
-              placeholder="Translation will appear here..."
+              placeholder="Translation"
               availableVoices={targetVoices}
               selectedVoice={targetVoice}
               onVoiceChange={setTargetVoice}
@@ -493,19 +499,21 @@ export function TranslatorApp() {
           </div>
 
           <div
-            className={`fixed bottom-6 right-6 transition-all duration-300 transform ${
-              showSavedSidebar
-                ? "translate-x-20 opacity-0 pointer-events-none"
-                : "translate-x-0 opacity-100"
+            className={`flex justify-center transition-all duration-300 ${
+              showSavedSidebar ? "opacity-0 pointer-events-none" : "opacity-100"
             }`}
           >
             <button
               type="button"
               onClick={() => setShowSavedSidebar(true)}
-              className="flex items-center gap-2 px-4 py-3 bg-zinc-900 text-white shadow-lg hover:shadow-xl hover:scale-105 transition-all duration-200"
+              className="flex flex-col items-center gap-1.5 group"
             >
-              <StarFilledIcon className="w-5 h-5" />
-              <span className="font-medium">Saved</span>
+              <div className="w-14 h-14 rounded-full bg-white border border-zinc-300 flex items-center justify-center transition-all duration-200">
+                <StarFilledIcon className="w-5 h-5 text-zinc-400 transition-colors" />
+              </div>
+              <span className="text-sm text-zinc-500 transition-colors">
+                Saved
+              </span>
             </button>
           </div>
         </div>
