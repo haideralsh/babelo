@@ -1,6 +1,6 @@
 import { useState } from "react";
-import { motion } from "motion/react";
 import { Button } from "./ui/button";
+import { LanguagesIcon, DownloadIcon } from "./icons";
 
 const API_BASE_URL = "http://localhost:8000";
 
@@ -8,60 +8,7 @@ interface OnboardingScreenProps {
   onComplete: () => void;
 }
 
-const LanguagesIcon = ({ className }: { className?: string }) => (
-  <svg
-    className={className}
-    viewBox="0 0 24 24"
-    fill="none"
-    stroke="currentColor"
-    strokeWidth="2"
-    strokeLinecap="round"
-    strokeLinejoin="round"
-  >
-    <path d="m5 8 6 6" />
-    <path d="m4 14 6-6 2-3" />
-    <path d="M2 5h12" />
-    <path d="M7 2h1" />
-    <path d="m22 22-5-10-5 10" />
-    <path d="M14 18h6" />
-  </svg>
-);
-
-const DownloadIcon = ({ className }: { className?: string }) => (
-  <svg
-    className={className}
-    viewBox="0 0 24 24"
-    fill="none"
-    stroke="currentColor"
-    strokeWidth="2"
-    strokeLinecap="round"
-    strokeLinejoin="round"
-  >
-    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-    <polyline points="7 10 12 15 17 10" />
-    <line x1="12" y1="15" x2="12" y2="3" />
-  </svg>
-);
-
-const SpinnerIcon = ({ className }: { className?: string }) => (
-  <svg className={className} viewBox="0 0 24 24" fill="none">
-    <circle
-      className="opacity-25"
-      cx="12"
-      cy="12"
-      r="10"
-      stroke="currentColor"
-      strokeWidth="4"
-    />
-    <path
-      className="opacity-75"
-      fill="currentColor"
-      d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-    />
-  </svg>
-);
-
-type DownloadState = "idle" | "downloading" | "error";
+type DownloadState = "idle" | "downloading" | "complete" | "error";
 
 export function OnboardingScreen({ onComplete }: OnboardingScreenProps) {
   const [downloadState, setDownloadState] = useState<DownloadState>("idle");
@@ -91,129 +38,85 @@ export function OnboardingScreen({ onComplete }: OnboardingScreenProps) {
   };
 
   return (
-    <div className="min-h-screen relative overflow-hidden flex items-center justify-center">
-      <div className="absolute inset-0  from-teal-950 via-slate-900 to-indigo-950">
-        <motion.div
-          className="absolute w-[600px] h-[600px] bg-teal-500/20 blur-3xl"
-          animate={{
-            x: [0, 100, 0],
-            y: [0, -50, 0],
-          }}
-          transition={{
-            duration: 20,
-            repeat: Infinity,
-            ease: "easeInOut",
-          }}
-          style={{ top: "-20%", left: "-10%" }}
-        />
-        <motion.div
-          className="absolute w-[500px] h-[500px] bg-indigo-500/20 blur-3xl"
-          animate={{
-            x: [0, -80, 0],
-            y: [0, 60, 0],
-          }}
-          transition={{
-            duration: 15,
-            repeat: Infinity,
-            ease: "easeInOut",
-          }}
-          style={{ bottom: "-15%", right: "-5%" }}
-        />
-        <motion.div
-          className="absolute w-[300px] h-[300px] bg-cyan-400/10 blur-2xl"
-          animate={{
-            x: [0, 50, 0],
-            y: [0, 80, 0],
-          }}
-          transition={{
-            duration: 18,
-            repeat: Infinity,
-            ease: "easeInOut",
-          }}
-          style={{ top: "40%", right: "20%" }}
-        />
-      </div>
-
-      <div className="relative z-10 max-w-lg mx-auto px-6 text-center">
-        <motion.div
-          initial={{ opacity: 0, y: 30 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8, ease: "easeOut" }}
-          className="mb-8"
-        >
-          <div className="inline-flex items-center justify-center w-20 h-20 from-teal-400 to-cyan-500 shadow-lg shadow-teal-500/30 mb-6">
-            <LanguagesIcon className="w-10 h-10 text-white" />
+    <div className="min-h-screen bg-background flex flex-col items-center justify-center px-4 py-12">
+      <div className="max-w-lg w-full text-center">
+        {/* Logo and Title */}
+        <div className="flex items-center justify-center gap-3 mb-6">
+          <div className="p-3 bg-primary/10 rounded-2xl">
+            <LanguagesIcon className="w-8 h-8 text-primary" />
           </div>
-          <h1 className="text-5xl font-bold text-white tracking-tight mb-3">
-            Bab
-          </h1>
-          <p className="text-xl text-teal-200/80 font-light">
-            Offline translation, powered by AI
-          </p>
-        </motion.div>
+        </div>
 
-        <motion.p
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8, delay: 0.2, ease: "easeOut" }}
-          className="text-slate-300/90 text-lg leading-relaxed mb-10"
-        >
-          Translate between 200+ languages directly on your device. No internet
-          required after setup. Your data stays private.
-        </motion.p>
+        <h1 className="text-3xl font-semibold text-foreground mb-3 text-balance">
+          Local Translator
+        </h1>
 
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8, delay: 0.4, ease: "easeOut" }}
-          className="space-y-4"
-        >
-          {downloadState === "error" && (
-            <motion.div
-              initial={{ opacity: 0, scale: 0.95 }}
-              animate={{ opacity: 1, scale: 1 }}
-              className="p-4 bg-red-500/20 border border-red-500/30 text-red-200 text-sm mb-4"
-            >
-              {errorMessage}
-            </motion.div>
+        <p className="text-muted-foreground text-lg mb-10 text-balance">
+          Translate text privately using AI that runs entirely on your device.
+          No internet required.
+        </p>
+
+        {/* Download Section */}
+        <div className="bg-card border border-border rounded-xl p-6">
+          {downloadState === "idle" && (
+            <>
+              <div className="flex items-center justify-center gap-2 text-muted-foreground mb-4">
+                <DownloadIcon className="w-5 h-5" />
+                <span className="text-sm font-medium">
+                  Translation Model Required
+                </span>
+              </div>
+              <p className="text-sm text-muted-foreground mb-6">
+                Download the AI model (~1 GB) to enable offline translations.
+              </p>
+              <Button onClick={handleDownload} color="teal" className="w-full">
+                <DownloadIcon className="w-5 h-5 mr-2" />
+                Download Model
+              </Button>
+            </>
           )}
 
-          <Button
-            color="cyan"
-            onClick={handleDownload}
-            disabled={downloadState === "downloading"}
-          >
-            {downloadState === "downloading" ? (
-              <>
-                <SpinnerIcon className="w-5 h-5 animate-spin mr-2" />
-                Downloading model...
-              </>
-            ) : downloadState === "error" ? (
-              <>
-                <DownloadIcon className="w-5 h-5 mr-2" />
-                Retry download
-              </>
-            ) : (
-              <>
-                <DownloadIcon className="w-5 h-5 mr-2" />
-                Download translation model
-              </>
-            )}
-          </Button>
+          {downloadState === "downloading" && (
+            <>
+              <div className="flex items-center justify-center gap-2 text-muted-foreground mb-4">
+                <DownloadIcon className="w-5 h-5" />
+                <span className="text-sm font-medium">
+                  Translation Model Required
+                </span>
+              </div>
+              <p className="text-sm text-muted-foreground mb-6">
+                Download the AI model (~1 GB) to enable offline translations.
+              </p>
+              <Button disabled color="teal" className="w-full">
+                <DownloadIcon className="w-5 h-5 mr-2 animate-pulse" />
+                Downloading...
+              </Button>
+            </>
+          )}
 
-          <p className="text-slate-400/70 text-sm">
-            ~1 GB download • One-time setup
-          </p>
-        </motion.div>
+          {downloadState === "error" && (
+            <>
+              <div className="flex items-center justify-center gap-2 text-red-500 mb-4">
+                <span className="text-sm font-medium">Download Failed</span>
+              </div>
+              <p className="text-sm text-muted-foreground mb-2">
+                {errorMessage}
+              </p>
+              <p className="text-sm text-muted-foreground mb-6">
+                Please check your connection and try again.
+              </p>
+              <Button onClick={handleDownload} color="teal" className="w-full">
+                <DownloadIcon className="w-5 h-5 mr-2" />
+                Retry Download
+              </Button>
+            </>
+          )}
+        </div>
 
-        <motion.p
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ duration: 0.8, delay: 0.6 }}
-          className="mt-16 text-slate-500 text-xs"
-        >
-          Powered by Meta's NLLB-200 model
-        </motion.p>
+        {/* Footer Note */}
+        <p className="text-xs text-muted-foreground mt-6">
+          The model is stored locally and only needs to be downloaded once.
+        </p>
       </div>
     </div>
   );
