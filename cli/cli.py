@@ -102,7 +102,6 @@ def cmd_status(args: argparse.Namespace) -> int:
     print(f"Loaded in memory: {'Yes' if manager.is_loaded else 'No'}")
 
     if downloaded:
-        # Calculate approximate size
         total_size = 0
         for file in manager.model_path.rglob("*"):
             if file.is_file():
@@ -132,6 +131,30 @@ def cmd_load_test(args: argparse.Namespace) -> int:
         return 0
     except RuntimeError as e:
         print(f"✗ Load failed: {e}", file=sys.stderr)
+        return 1
+
+
+def cmd_delete(args: argparse.Namespace) -> int:
+    """Delete the downloaded model."""
+    manager = get_model_manager()
+
+    if args.cache_dir:
+        manager.cache_dir = args.cache_dir
+
+    print(f"Model: {MODEL_NAME}")
+    print(f"Model path: {manager.model_path}")
+    print()
+
+    if not manager.is_downloaded:
+        print("✓ Model not downloaded, nothing to delete.")
+        return 0
+
+    try:
+        manager.delete_model()
+        print("✓ Model deleted successfully!")
+        return 0
+    except RuntimeError as e:
+        print(f"✗ Deletion failed: {e}", file=sys.stderr)
         return 1
 
 
@@ -254,6 +277,13 @@ def main() -> int:
         parents=[parent_parser],
     )
     load_parser.set_defaults(func=cmd_load_test)
+
+    delete_parser = subparsers.add_parser(
+        "delete",
+        help="Delete the downloaded model from disk",
+        parents=[parent_parser],
+    )
+    delete_parser.set_defaults(func=cmd_delete)
 
     translate_parser = subparsers.add_parser(
         "translate",

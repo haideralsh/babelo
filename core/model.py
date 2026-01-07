@@ -386,6 +386,35 @@ class ModelManager:
         self._is_loaded = False
         logger.info("Model unloaded from memory")
 
+    def delete_model(self) -> bool:
+        """Delete the downloaded model from disk.
+
+        This will unload the model from memory first, then remove the
+        model directory from the cache. The operation is idempotent -
+        if the model is not downloaded, returns True without error.
+
+        Returns:
+            True if deletion was successful or model didn't exist.
+
+        Raises:
+            RuntimeError: If deletion fails due to filesystem errors.
+        """
+        import shutil
+
+        self.unload_model()
+
+        if not self.model_path.exists():
+            logger.info("Model not downloaded, nothing to delete")
+            return True
+
+        try:
+            shutil.rmtree(self.model_path)
+            logger.info(f"Model deleted from {self.model_path}")
+            return True
+        except Exception as e:
+            logger.error(f"Failed to delete model: {e}")
+            raise RuntimeError(f"Failed to delete model at {self.model_path}: {e}") from e
+
     def get_model(self) -> "AutoModelForSeq2SeqLM":
         """Get the loaded model, loading it if necessary.
 

@@ -34,6 +34,14 @@ class ModelDownloadResponse(BaseModel):
     model_path: str
 
 
+class ModelRemoveResponse(BaseModel):
+    """Response model for model removal."""
+
+    success: bool
+    message: str
+    model_path: str
+
+
 @router.get("/status", response_model=ModelStatusResponse)
 async def model_status() -> ModelStatusResponse:
     """Show model status.
@@ -111,4 +119,36 @@ async def model_download(
         raise HTTPException(
             status_code=500,
             detail=f"Download failed: {e}",
+        ) from e
+
+
+@router.post("/remove", response_model=ModelRemoveResponse)
+async def model_remove() -> ModelRemoveResponse:
+    """Remove the downloaded model from disk.
+
+    Unloads the model from memory and deletes the model files from the cache
+    directory. This operation is idempotent - if the model is not downloaded,
+    returns success.
+    """
+    manager = get_model_manager()
+    model_path = str(manager.model_path)
+
+    if not manager.is_downloaded:
+        return ModelRemoveResponse(
+            success=True,
+            message="Model not downloaded, nothing to remove.",
+            model_path=model_path,
+        )
+
+    try:
+        manager.delete_model()
+        return ModelRemoveResponse(
+            success=True,
+            message="Model removed successfully.",
+            model_path=model_path,
+        )
+    except RuntimeError as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Removal failed: {e}",
         ) from e
