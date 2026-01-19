@@ -248,3 +248,47 @@ export const ZapIcon = ({ className }: { className?: string }) => (
     <path d="M4 14a1 1 0 0 1-.78-1.63l9.9-10.2a.5.5 0 0 1 .86.46l-1.92 6.02A1 1 0 0 0 13 10h7a1 1 0 0 1 .78 1.63l-9.9 10.2a.5.5 0 0 1-.86-.46l1.92-6.02A1 1 0 0 0 11 14z" />
   </svg>
 );
+
+export const LoaderIcon = ({ className }: { className?: string }) => (
+  <svg
+    className={className}
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+  >
+    <path d="M12 2v4" />
+    <path d="m16.2 7.8 2.9-2.9" />
+    <path d="M18 12h4" />
+    <path d="m16.2 16.2 2.9 2.9" />
+    <path d="M12 18v4" />
+    <path d="m4.9 19.1 2.9-2.9" />
+    <path d="M2 12h4" />
+    <path d="m4.9 4.9 2.9 2.9" />
+  </svg>
+);
+
+export const CpuIcon = ({ className }: { className?: string }) => (
+  <svg
+    className={className}
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+  >
+    <rect x="4" y="4" width="16" height="16" rx="2" />
+    <rect x="9" y="9" width="6" height="6" />
+    <path d="M9 1v3" />
+    <path d="M15 1v3" />
+    <path d="M9 20v3" />
+    <path d="M15 20v3" />
+    <path d="M20 9h3" />
+    <path d="M20 14h3" />
+    <path d="M1 9h3" />
+    <path d="M1 14h3" />
+  </svg>
+);

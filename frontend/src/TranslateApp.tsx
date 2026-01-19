@@ -7,15 +7,24 @@ import { type SavedTranslationData } from "./components/SavedTranslationItem";
 import { getRecentLanguages, addRecentLanguage } from "./utils/languageStorage";
 import { SavedSidebar, type SavedSidebarRef } from "./components/SavedSidebar";
 import {
+  ModelSelector,
+  getSavedModelId,
+  type ModelInfo,
+  type ModelStatus,
+} from "./components/ModelSelector";
+import {
   API_BASE_URL,
   DEBOUNCE_DELAY,
   LS_SOURCE_LANGS_KEY,
   LS_TARGET_LANGS_KEY,
+  LS_SELECTED_MODEL_KEY,
+  DEFAULT_MODEL_ID,
 } from "./utils/constants";
 import {
   LanguagesIcon,
   ArrowRightLeftIcon,
   StarFilledIcon,
+  CpuIcon,
 } from "./components/icons";
 
 export function TranslatorApp() {
@@ -30,6 +39,9 @@ export function TranslatorApp() {
   const [showSavedSidebar, setShowSavedSidebar] = useState(false);
   const [isStarred, setIsStarred] = useState(false);
   const [starredItemId, setStarredItemId] = useState<string | null>(null);
+  const [selectedModelId, setSelectedModelId] = useState(getSavedModelId());
+  const [modelStatus, setModelStatus] = useState<ModelStatus | null>(null);
+  const [showModelSelector, setShowModelSelector] = useState(false);
   const savedSidebarRef = useRef<SavedSidebarRef>(null);
   const abortControllerRef = useRef<AbortController | null>(null);
   const starCheckControllerRef = useRef<AbortController | null>(null);
@@ -197,10 +209,32 @@ export function TranslatorApp() {
     if (code) addRecentLanguage(LS_TARGET_LANGS_KEY, code);
   };
 
+  // Fetch model status
+  useEffect(() => {
+    const fetchModelStatus = async () => {
+      try {
+        const response = await fetch(
+          `${API_BASE_URL}/model/status?model_id=${selectedModelId}`
+        );
+        if (response.ok) {
+          const data = await response.json();
+          setModelStatus(data);
+        }
+      } catch (err) {
+        console.error("Error fetching model status:", err);
+      }
+    };
+
+    fetchModelStatus();
+  }, [selectedModelId]);
+
+  // Fetch languages for selected model
   useEffect(() => {
     const fetchLanguages = async () => {
       try {
-        const response = await fetch(`${API_BASE_URL}/languages`);
+        const response = await fetch(
+          `${API_BASE_URL}/languages?model_id=${selectedModelId}`
+        );
         const data = await response.json();
 
         const languageList: Language[] = Object.entries(data.languages).map(
@@ -246,7 +280,13 @@ export function TranslatorApp() {
     };
 
     fetchLanguages();
-  }, []);
+  }, [selectedModelId]);
+
+  // Clear translation when model changes
+  useEffect(() => {
+    setTranslatedText("");
+    setError("");
+  }, [selectedModelId]);
 
   useEffect(() => {
     if (!inputText.trim()) {
@@ -256,6 +296,11 @@ export function TranslatorApp() {
     }
 
     if (!sourceLanguage || !targetLanguage) {
+      return;
+    }
+
+    // Don't translate if model is not downloaded
+    if (!modelStatus?.is_downloaded) {
       return;
     }
 
@@ -279,6 +324,7 @@ export function TranslatorApp() {
             text: inputText,
             source_language_code: sourceLanguage,
             target_language_code: targetLanguage,
+            model_id: selectedModelId,
           }),
           signal: abortControllerRef.current.signal,
         });
@@ -304,7 +350,7 @@ export function TranslatorApp() {
     return () => {
       clearTimeout(timeoutId);
     };
-  }, [inputText, sourceLanguage, targetLanguage]);
+  }, [inputText, sourceLanguage, targetLanguage, selectedModelId, modelStatus?.is_downloaded]);
 
   useEffect(() => {
     if (!inputText.trim() || !sourceLanguage || !targetLanguage) {
@@ -406,6 +452,16 @@ export function TranslatorApp() {
     setTranslatedText(item.translatedText);
   };
 
+  const handleModelChange = (modelId: string) => {
+    setSelectedModelId(modelId);
+    localStorage.setItem(LS_SELECTED_MODEL_KEY, modelId);
+    // Fetch new model status
+    fetch(`${API_BASE_URL}/model/status?model_id=${modelId}`)
+      .then((res) => res.json())
+      .then((data) => setModelStatus(data))
+      .catch(console.error);
+  };
+
   const getLanguageName = (code: string) => {
     return languages.find((l) => l.code === code)?.name || code;
   };
@@ -414,14 +470,65 @@ export function TranslatorApp() {
     <div className="flex h-screen bg-white overflow-hidden">
       <main className="flex-1 min-w-0 h-full overflow-y-auto">
         <div className="max-w-5xl mx-auto px-4 py-8 md:py-12 pb-24">
-          <header className="flex items-center gap-3 mb-8">
-            <div className="p-2 bg-sky-3">
-              <LanguagesIcon className="w-6 h-6 text-sky-11" />
+          <header className="flex items-center justify-between gap-3 mb-8">
+            <div className="flex items-center gap-3">
+              <div className="p-2 bg-sky-3">
+                <LanguagesIcon className="w-6 h-6 text-sky-11" />
+              </div>
+              <h1 className="text-2xl font-semibold text-zinc-900">
+                Bab Translator
+              </h1>
             </div>
-            <h1 className="text-2xl font-semibold text-zinc-900">
-              Bab Translator
-            </h1>
+            <button
+              type="button"
+              onClick={() => setShowModelSelector(!showModelSelector)}
+              className="flex items-center gap-2 px-3 py-1.5 text-sm text-zinc-600 hover:text-zinc-900 hover:bg-zinc-100 rounded-lg transition-colors"
+            >
+              <CpuIcon className="w-4 h-4" />
+              <span className="hidden sm:inline">
+                {selectedModelId === "nllb" ? "NLLB-200" : "TranslateGemma"}
+              </span>
+            </button>
           </header>
+
+          {showModelSelector && (
+            <div className="mb-6 p-4 bg-zinc-50 rounded-lg border border-zinc-200">
+              <div className="flex items-center justify-between mb-3">
+                <h3 className="text-sm font-medium text-zinc-700">
+                  Select Translation Model
+                </h3>
+                <button
+                  type="button"
+                  onClick={() => setShowModelSelector(false)}
+                  className="text-zinc-500 hover:text-zinc-700"
+                >
+                  &times;
+                </button>
+              </div>
+              <ModelSelector
+                selectedModelId={selectedModelId}
+                onModelChange={handleModelChange}
+                onDownloadComplete={() => {
+                  // Refresh model status
+                  fetch(`${API_BASE_URL}/model/status?model_id=${selectedModelId}`)
+                    .then((res) => res.json())
+                    .then((data) => setModelStatus(data))
+                    .catch(console.error);
+                }}
+              />
+            </div>
+          )}
+
+          {!modelStatus?.is_downloaded && (
+            <div className="mb-4 p-4 bg-amber-50 border border-amber-200 text-amber-800 rounded-lg">
+              <p className="font-medium">Model not downloaded</p>
+              <p className="text-sm mt-1">
+                Click the model selector above to download{" "}
+                {selectedModelId === "nllb" ? "NLLB-200" : "TranslateGemma"}{" "}
+                before translating.
+              </p>
+            </div>
+          )}
 
           {error && (
             <div className="mb-4 p-4 bg-red-50 border border-red-200 text-red-700">

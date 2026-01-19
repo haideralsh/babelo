@@ -2,6 +2,7 @@
 
 This module provides a REPL-style interface for:
 - Setting source/target languages with autocomplete
+- Selecting translation model
 - Translating text interactively
 - Viewing model status
 """
@@ -18,7 +19,13 @@ from rich.table import Table
 from rich.text import Text
 
 from cli.interactive.completers import CommandCompleter, LanguageCompleter
-from core.model import LANGUAGE_CODES, MODEL_NAME, get_model_manager
+from core.model import (
+    DEFAULT_MODEL_ID,
+    MODEL_REGISTRY,
+    get_available_models,
+    get_model_info,
+    get_model_manager,
+)
 from core.preferences import get_preferences_manager
 
 
@@ -28,21 +35,35 @@ class InteractiveSession:
     def __init__(self):
         self.console = Console()
         self.manager = get_model_manager()
+        self.preferences = get_preferences_manager()
 
-        self.lang_completer = LanguageCompleter(LANGUAGE_CODES)
+        # Load saved model preference
+        saved_model = self.preferences.get("cli:model_id")
+        self.model_id = (
+            saved_model if saved_model in MODEL_REGISTRY else DEFAULT_MODEL_ID
+        )
+
+        # Initialize language codes for current model
+        self._update_language_codes()
+
         self.command_completer = CommandCompleter()
 
-        self.code_to_name = {v: k for k, v in LANGUAGE_CODES.items()}
         history_path = Path.home() / ".cache" / "bab" / "history"
         history_path.parent.mkdir(parents=True, exist_ok=True)
         self.session = PromptSession(history=FileHistory(str(history_path)))
 
-        self.preferences = get_preferences_manager()
-        valid_codes = set(LANGUAGE_CODES.values())
+        # Load saved language preferences
+        valid_codes = set(self.language_codes.values())
         saved_source = self.preferences.get("cli:source_lang")
         self.source_lang = saved_source if saved_source in valid_codes else None
         saved_target = self.preferences.get("cli:target_lang")
         self.target_lang = saved_target if saved_target in valid_codes else None
+
+    def _update_language_codes(self):
+        """Update language codes and completer for current model."""
+        self.language_codes = self.manager.get_language_codes(self.model_id)
+        self.code_to_name = {v: k for k, v in self.language_codes.items()}
+        self.lang_completer = LanguageCompleter(self.language_codes)
 
     def _get_language_name(self, code: str) -> str:
         """Get the human-readable name for a language code."""
@@ -68,6 +89,13 @@ class InteractiveSession:
         self.console.print(banner)
         self.console.print()
 
+        # Show current model
+        model_info = get_model_info(self.model_id)
+        self.console.print(
+            f"  Model: [bold]{model_info.display_name}[/bold]",
+            markup=True,
+        )
+
         self.console.print(
             self._format_lang_setting("  Source", self.source_lang), markup=True
         )
@@ -83,8 +111,8 @@ class InteractiveSession:
         )
 
         self.console.print(
-            "[dim]Type [/dim][bold white]/exit[/bold white][dim] or [/dim]"
-            "[bold white]/quit[/bold white][dim] to exit.[/dim]",
+            "[dim]Type [/dim][bold white]/model[/bold white][dim] to change model, "
+            "[/dim][bold white]/exit[/bold white][dim] to exit.[/dim]",
             markup=True,
         )
         self.console.print(
@@ -103,11 +131,13 @@ class InteractiveSession:
         help_table.add_column("Description")
 
         commands = [
+            ("/model", "Select translation model"),
             ("/source", "Set source language (with autocomplete)"),
             ("/target", "Set target language (with autocomplete)"),
             ("/swap", "Swap source and target languages"),
             ("/status", "Show model and session status"),
             ("/languages", "List all available language codes"),
+            ("/models", "List available translation models"),
             ("/clear", "Clear screen and history"),
             ("/help", "Show this help message"),
             ("/quit, /exit, /q", "Exit interactive mode"),
@@ -121,6 +151,89 @@ class InteractiveSession:
         self.console.print(help_table)
         self.console.print()
 
+    def set_model(self):
+        """Prompt user to select a translation model."""
+        models = get_available_models()
+
+        self.console.print()
+        self.console.print("[bold]Available models:[/bold]", markup=True)
+        self.console.print()
+
+        for i, info in enumerate(models, 1):
+            backend = self.manager.get_backend(info.model_id)
+            status = "✓" if backend.is_downloaded else "○"
+            current = " [current]" if info.model_id == self.model_id else ""
+            auth = " [requires HF token]" if info.requires_auth else ""
+
+            self.console.print(
+                f"  {i}. {status} [bold]{info.model_id}[/bold] - "
+                f"{info.display_name}{current}{auth}",
+                markup=True,
+            )
+
+        self.console.print()
+        self.console.print(
+            "[dim]Enter model number or ID:[/dim]",
+            markup=True,
+        )
+
+        try:
+            choice = prompt("model> ").strip()
+            if not choice:
+                return
+
+            # Try parsing as number first
+            try:
+                idx = int(choice) - 1
+                if 0 <= idx < len(models):
+                    new_model_id = models[idx].model_id
+                else:
+                    self.console.print(
+                        f"✗ Invalid choice: {choice}",
+                        markup=True,
+                    )
+                    return
+            except ValueError:
+                # Try as model ID
+                if choice in MODEL_REGISTRY:
+                    new_model_id = choice
+                else:
+                    self.console.print(
+                        f"✗ Unknown model: '{choice}'",
+                        markup=True,
+                    )
+                    return
+
+            # Switch model
+            self.model_id = new_model_id
+            self.preferences.set("cli:model_id", new_model_id)
+            self._update_language_codes()
+
+            # Clear language settings if they're invalid for new model
+            valid_codes = set(self.language_codes.values())
+            if self.source_lang and self.source_lang not in valid_codes:
+                self.source_lang = None
+                self.preferences.delete("cli:source_lang")
+            if self.target_lang and self.target_lang not in valid_codes:
+                self.target_lang = None
+                self.preferences.delete("cli:target_lang")
+
+            model_info = get_model_info(new_model_id)
+            self.console.print(
+                f"✓ Switched to [bold]{model_info.display_name}[/bold]",
+                markup=True,
+            )
+
+            if not self.manager.get_backend(new_model_id).is_downloaded:
+                self.console.print(
+                    "[dim]  Note: Model not downloaded. "
+                    "Run 'bab download --model {}' first.[/dim]".format(new_model_id),
+                    markup=True,
+                )
+
+        except (KeyboardInterrupt, EOFError):
+            self.console.print("[dim]Cancelled[/dim]", markup=True)
+
     def set_source_language(self):
         """Prompt user to set source language with autocomplete."""
         self.console.print(
@@ -130,7 +243,7 @@ class InteractiveSession:
         try:
             lang = prompt("source> ", completer=self.lang_completer).strip()
             if lang:
-                valid_codes = set(LANGUAGE_CODES.values())
+                valid_codes = set(self.language_codes.values())
                 if lang in valid_codes:
                     self.source_lang = lang
                     self.preferences.set("cli:source_lang", lang)
@@ -198,7 +311,7 @@ class InteractiveSession:
         try:
             lang = prompt("target> ", completer=self.lang_completer).strip()
             if lang:
-                valid_codes = set(LANGUAGE_CODES.values())
+                valid_codes = set(self.language_codes.values())
                 if lang in valid_codes:
                     self.target_lang = lang
                     self.preferences.set("cli:target_lang", lang)
@@ -234,10 +347,15 @@ class InteractiveSession:
             )
             return
 
-        if not self.manager.is_downloaded:
-            self.console.print("✗ Model not downloaded.", markup=True)
+        backend = self.manager.get_backend(self.model_id)
+
+        if not backend.is_downloaded:
             self.console.print(
-                "[dim]  Run 'bab download' from the command line first.[/dim]",
+                f"✗ Model '{self.model_id}' not downloaded.", markup=True
+            )
+            self.console.print(
+                f"[dim]  Run 'bab download --model {self.model_id}' "
+                "from the command line first.[/dim]",
                 markup=True,
             )
             return
@@ -246,7 +364,7 @@ class InteractiveSession:
             with self.console.status(
                 "", spinner="simpleDotsScrolling", spinner_style="white"
             ):
-                translated = self.manager.translate(
+                translated = backend.translate(
                     text, self.source_lang, self.target_lang
                 )
 
@@ -274,6 +392,12 @@ class InteractiveSession:
         status_table.add_column("Setting", style="dim")
         status_table.add_column("Value")
 
+        # Model info
+        model_info = get_model_info(self.model_id)
+        status_table.add_row("Model", f"{model_info.display_name} ({self.model_id})")
+        status_table.add_row("Repo", model_info.repo_id)
+        status_table.add_row("", "")
+
         if self.source_lang:
             source_name = self._get_language_name(self.source_lang)
             source_val = f"{self.source_lang} ({source_name})"
@@ -290,20 +414,20 @@ class InteractiveSession:
         status_table.add_row("Target Language", target_val)
         status_table.add_row("", "")
 
-        status_table.add_row("Model", MODEL_NAME)
+        backend = self.manager.get_backend(self.model_id)
         status_table.add_row("Cache Directory", str(self.manager.cache_dir))
 
-        downloaded = self.manager.is_downloaded
+        downloaded = backend.is_downloaded
         downloaded_status = "[bold]Yes[/bold]" if downloaded else "No"
         status_table.add_row("Downloaded", downloaded_status)
 
-        loaded = self.manager.is_loaded
+        loaded = backend.is_loaded
         loaded_status = "[bold]Yes[/bold]" if loaded else "[dim]No[/dim]"
         status_table.add_row("Loaded in Memory", loaded_status)
 
         if downloaded:
             total_size = 0
-            for file in self.manager.model_path.rglob("*"):
+            for file in backend.model_path.rglob("*"):
                 if file.is_file():
                     total_size += file.stat().st_size
             size_mb = total_size / (1024 * 1024)
@@ -314,10 +438,12 @@ class InteractiveSession:
 
     def show_languages(self):
         """Display available languages in a formatted table."""
+        model_info = get_model_info(self.model_id)
+
         table = Table(
             show_header=True,
             header_style="bold",
-            title="Available Languages",
+            title=f"Languages for {model_info.display_name}",
             title_style="bold",
         )
 
@@ -326,7 +452,7 @@ class InteractiveSession:
         table.add_column("Language", style="white")
         table.add_column("Code", style="bold")
 
-        sorted_langs = sorted(LANGUAGE_CODES.items())
+        sorted_langs = sorted(self.language_codes.items())
         mid = (len(sorted_langs) + 1) // 2
 
         left_col = sorted_langs[:mid]
@@ -342,8 +468,32 @@ class InteractiveSession:
 
         self.console.print()
         self.console.print(table)
-        self.console.print(f"\n[dim]Total: {len(LANGUAGE_CODES)} languages[/dim]")
+        self.console.print(f"\n[dim]Total: {len(self.language_codes)} languages[/dim]")
         self.console.print()
+
+    def show_models(self):
+        """Display available models."""
+        models = get_available_models()
+
+        self.console.print()
+        self.console.print("[bold]Available translation models:[/bold]", markup=True)
+        self.console.print()
+
+        for info in models:
+            backend = self.manager.get_backend(info.model_id)
+            status = "✓ Downloaded" if backend.is_downloaded else "○ Not downloaded"
+            loaded = " (loaded)" if backend.is_loaded else ""
+            current = " [bold cyan]← current[/bold cyan]" if info.model_id == self.model_id else ""
+            auth = " [yellow][HF token required][/yellow]" if info.requires_auth else ""
+
+            self.console.print(
+                f"  [bold]{info.model_id}[/bold] - {info.display_name}{current}",
+                markup=True,
+            )
+            self.console.print(f"    {status}{loaded}{auth}", markup=True)
+            self.console.print(f"    Size: {info.size_estimate}", markup=True)
+            self.console.print(f"    [dim]{info.description}[/dim]", markup=True)
+            self.console.print()
 
     def clear_screen(self):
         """Clear terminal screen and reset command history."""
@@ -360,13 +510,16 @@ class InteractiveSession:
 
         while True:
             try:
+                model_info = get_model_info(self.model_id)
+                model_short = model_info.model_id
+
                 if self.source_lang and self.target_lang:
                     source_name = self._get_language_name(self.source_lang)
                     target_name = self._get_language_name(self.target_lang)
 
-                    prompt_text = f"[{source_name} → {target_name}] bab> "
+                    prompt_text = f"[{source_name} → {target_name}] {model_short}> "
                 else:
-                    prompt_text = "bab> "
+                    prompt_text = f"{model_short}> "
 
                 user_input = self.session.prompt(
                     prompt_text, completer=self.command_completer
@@ -377,6 +530,8 @@ class InteractiveSession:
 
                 if user_input in ("/quit", "/exit", "/q"):
                     break
+                elif user_input == "/model":
+                    self.set_model()
                 elif user_input == "/source":
                     self.set_source_language()
                 elif user_input == "/target":
@@ -387,6 +542,8 @@ class InteractiveSession:
                     self.show_status()
                 elif user_input == "/languages":
                     self.show_languages()
+                elif user_input == "/models":
+                    self.show_models()
                 elif user_input == "/clear":
                     self.clear_screen()
                 elif user_input == "/help":
