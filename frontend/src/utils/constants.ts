@@ -4,4 +4,8 @@ export const DEBOUNCE_DELAY = 500;
 // LocalStorage keys for language preferences
 export const LS_SOURCE_LANGS_KEY = "bab_source_languages";
 export const LS_TARGET_LANGS_KEY = "bab_target_languages";
+export const LS_SELECTED_MODEL_KEY = "bab_selected_model";
 export const MAX_RECENT_LANGUAGES = 5;
+
+// Default model ID
+export const DEFAULT_MODEL_ID = "nllb";

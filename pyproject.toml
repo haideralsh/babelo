@@ -12,6 +12,7 @@ dependencies = [
     "protobuf",
     "accelerate",
     "huggingface-hub",
+    "pillow",
     "prompt-toolkit>=3.0.0",
     "rich>=13.0.0",
 ]

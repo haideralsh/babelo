@@ -30,11 +30,13 @@ class CommandCompleter(Completer):
     """Completer for slash commands"""
 
     COMMANDS = [
+        ("/model", "Select translation model"),
         ("/source", "Set source language"),
         ("/target", "Set target language"),
         ("/swap", "Swap source and target languages"),
         ("/status", "Show model and session status"),
         ("/languages", "List all available language codes"),
+        ("/models", "List available translation models"),
         ("/clear", "Clear screen and history"),
         ("/help", "Show help message"),
         ("/quit", "Exit interactive mode"),

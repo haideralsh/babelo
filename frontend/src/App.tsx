@@ -12,15 +12,15 @@ function App() {
   useEffect(() => {
     const checkModelStatus = async () => {
       try {
-        const response = await fetch(`${API_BASE_URL}/model/status`);
+        const [gemmaResponse, nllbResponse] = await Promise.all([
+          fetch(`${API_BASE_URL}/model/status?model_id=translategemma`),
+          fetch(`${API_BASE_URL}/model/status?model_id=nllb`),
+        ]);
 
-        if (!response.ok) {
-          setAppState("onboarding");
-          return;
-        }
+        const gemmaData = gemmaResponse.ok ? await gemmaResponse.json() : null;
+        const nllbData = nllbResponse.ok ? await nllbResponse.json() : null;
 
-        const data = await response.json();
-        if (data.is_downloaded) {
+        if (gemmaData?.is_downloaded || nllbData?.is_downloaded) {
           setAppState("ready");
         } else {
           setAppState("onboarding");
