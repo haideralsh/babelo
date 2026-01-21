@@ -43,7 +43,6 @@ export const SavedSidebar = forwardRef<SavedSidebarRef, SavedSidebarProps>(
         const response = await fetch(`${API_BASE_URL}/saved`);
         if (!response.ok) return;
         const data = await response.json();
-        // Map API response to SavedTranslationData format
         const items: SavedTranslationData[] = data.items.map(
           (item: {
             id: string;

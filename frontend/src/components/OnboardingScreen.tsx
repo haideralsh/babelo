@@ -32,7 +32,6 @@ export function OnboardingScreen({ onComplete }: OnboardingScreenProps) {
   const [downloadState, setDownloadState] = useState<DownloadState>("idle");
   const [errorMessage, setErrorMessage] = useState("");
 
-  // Fetch available models and their statuses on mount
   useEffect(() => {
     const fetchModels = async () => {
       try {
@@ -40,7 +39,6 @@ export function OnboardingScreen({ onComplete }: OnboardingScreenProps) {
         if (!response.ok) throw new Error("Failed to fetch models");
         const data = await response.json();
         setModels(data.models);
-        // Default to the server's default model
         if (data.default_model_id) {
           setSelectedModelId(data.default_model_id);
         }
@@ -82,7 +80,6 @@ export function OnboardingScreen({ onComplete }: OnboardingScreenProps) {
         throw new Error(errorData.detail || "Download failed");
       }
 
-      // Save the selected model to localStorage so the app uses it
       localStorage.setItem(LS_SELECTED_MODEL_KEY, selectedModelId);
       onComplete();
     } catch (err) {
@@ -98,7 +95,6 @@ export function OnboardingScreen({ onComplete }: OnboardingScreenProps) {
   const isSelectedModelDownloaded = selectedModelStatus?.is_downloaded ?? false;
 
   const handleContinue = () => {
-    // Save the selected model to localStorage and continue
     localStorage.setItem(LS_SELECTED_MODEL_KEY, selectedModelId);
     onComplete();
   };
@@ -106,7 +102,6 @@ export function OnboardingScreen({ onComplete }: OnboardingScreenProps) {
   return (
     <div className="min-h-screen bg-background flex flex-col items-center justify-center px-4 py-12">
       <div className="max-w-lg w-full text-center">
-        {/* Logo and Title */}
         <div className="flex items-center justify-center gap-3 mb-6">
           <div className="p-3 bg-primary/10 rounded-2xl">
             <LanguagesIcon className="w-8 h-8 text-primary" />
@@ -122,7 +117,6 @@ export function OnboardingScreen({ onComplete }: OnboardingScreenProps) {
           No internet required.
         </p>
 
-        {/* Model Selection */}
         <div className="bg-card border border-border rounded-xl p-6">
           <div className="flex items-center justify-center gap-2 text-muted-foreground mb-4">
             <DownloadIcon className="w-5 h-5" />
@@ -131,7 +125,6 @@ export function OnboardingScreen({ onComplete }: OnboardingScreenProps) {
             </span>
           </div>
 
-          {/* Model Options */}
           {models.length > 0 && downloadState !== "downloading" && (
             <div className="space-y-3 mb-6">
               {models.map((model) => {
@@ -189,14 +182,12 @@ export function OnboardingScreen({ onComplete }: OnboardingScreenProps) {
             </div>
           )}
 
-          {/* Loading state for models */}
           {models.length === 0 && downloadState !== "error" && (
             <div className="text-sm text-muted-foreground mb-6">
               Loading available models...
             </div>
           )}
 
-          {/* Download / Continue Button */}
           {downloadState === "idle" && isSelectedModelDownloaded && (
             <Button
               onClick={handleContinue}
@@ -251,7 +242,6 @@ export function OnboardingScreen({ onComplete }: OnboardingScreenProps) {
           )}
         </div>
 
-        {/* Footer Note */}
         <p className="text-xs text-muted-foreground mt-6">
           The model is stored locally and only needs to be downloaded once.
         </p>

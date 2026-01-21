@@ -40,7 +40,6 @@ export function ModelSelector({
   const [downloading, setDownloading] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  // Fetch available models
   useEffect(() => {
     const fetchModels = async () => {
       try {
@@ -56,7 +55,6 @@ export function ModelSelector({
     fetchModels();
   }, []);
 
-  // Fetch model statuses
   useEffect(() => {
     const fetchStatuses = async () => {
       try {
@@ -74,12 +72,11 @@ export function ModelSelector({
     };
 
     fetchStatuses();
-  }, [downloading]); // Refresh after download completes
+  }, [downloading]);
 
   const handleModelSelect = (modelId: string) => {
     const status = modelStatuses[modelId];
     if (!status?.is_downloaded) {
-      // Don't allow selecting a model that isn't downloaded
       return;
     }
     onModelChange(modelId);
@@ -101,7 +98,6 @@ export function ModelSelector({
         throw new Error(data.detail || "Download failed");
       }
 
-      // Refresh statuses after download
       const statusResponse = await fetch(`${API_BASE_URL}/model/list/status`);
       if (statusResponse.ok) {
         const data = await statusResponse.json();
@@ -124,7 +120,7 @@ export function ModelSelector({
   const selectedStatus = modelStatuses[selectedModelId];
 
   if (models.length === 0) {
-    return null; // Still loading
+    return null;
   }
 
   return (
@@ -194,7 +190,6 @@ export function ModelSelector({
   );
 }
 
-// Helper to get saved model from localStorage
 export function getSavedModelId(): string {
   try {
     const saved = localStorage.getItem(LS_SELECTED_MODEL_KEY);

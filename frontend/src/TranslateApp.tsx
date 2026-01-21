@@ -9,7 +9,6 @@ import { SavedSidebar, type SavedSidebarRef } from "./components/SavedSidebar";
 import {
   ModelSelector,
   getSavedModelId,
-  type ModelInfo,
   type ModelStatus,
 } from "./components/ModelSelector";
 import {
@@ -18,7 +17,6 @@ import {
   LS_SOURCE_LANGS_KEY,
   LS_TARGET_LANGS_KEY,
   LS_SELECTED_MODEL_KEY,
-  DEFAULT_MODEL_ID,
 } from "./utils/constants";
 import {
   LanguagesIcon,
@@ -49,7 +47,6 @@ export function TranslatorApp() {
   const loadedTargetVoiceLangsRef = useRef<Set<string>>(new Set());
   const sourceTextareaRef = useRef<HTMLTextAreaElement>(null);
 
-  // Focus the source textarea on mount
   useEffect(() => {
     sourceTextareaRef.current?.focus();
   }, []);
@@ -107,7 +104,6 @@ export function TranslatorApp() {
         return data.value;
       }
     } catch (err) {
-      // Preference not found or error - will use default voice
     }
     return null;
   };
@@ -209,7 +205,6 @@ export function TranslatorApp() {
     if (code) addRecentLanguage(LS_TARGET_LANGS_KEY, code);
   };
 
-  // Fetch model status
   useEffect(() => {
     const fetchModelStatus = async () => {
       try {
@@ -228,7 +223,6 @@ export function TranslatorApp() {
     fetchModelStatus();
   }, [selectedModelId]);
 
-  // Fetch languages for selected model
   useEffect(() => {
     const fetchLanguages = async () => {
       try {
@@ -282,7 +276,6 @@ export function TranslatorApp() {
     fetchLanguages();
   }, [selectedModelId]);
 
-  // Clear translation when model changes
   useEffect(() => {
     setTranslatedText("");
     setError("");
@@ -299,7 +292,6 @@ export function TranslatorApp() {
       return;
     }
 
-    // Don't translate if model is not downloaded
     if (!modelStatus?.is_downloaded) {
       return;
     }
@@ -455,7 +447,6 @@ export function TranslatorApp() {
   const handleModelChange = (modelId: string) => {
     setSelectedModelId(modelId);
     localStorage.setItem(LS_SELECTED_MODEL_KEY, modelId);
-    // Fetch new model status
     fetch(`${API_BASE_URL}/model/status?model_id=${modelId}`)
       .then((res) => res.json())
       .then((data) => setModelStatus(data))
@@ -509,7 +500,6 @@ export function TranslatorApp() {
                 selectedModelId={selectedModelId}
                 onModelChange={handleModelChange}
                 onDownloadComplete={() => {
-                  // Refresh model status
                   fetch(`${API_BASE_URL}/model/status?model_id=${selectedModelId}`)
                     .then((res) => res.json())
                     .then((data) => setModelStatus(data))

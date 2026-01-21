@@ -2,9 +2,8 @@
 
 :root {
   font-family: Inter, sans-serif;
-  font-feature-settings: "liga" 1, "calt" 1; /* fix for Chrome */
+  font-feature-settings: "liga" 1, "calt" 1;
 
-  /* Design system variables */
   --background: #fafafa;
   --foreground: #0a0a0a;
   --card: #ffffff;
