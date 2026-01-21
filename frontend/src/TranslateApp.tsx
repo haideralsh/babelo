@@ -7,7 +7,6 @@ import { type SavedTranslationData } from "./components/SavedTranslationItem";
 import { getRecentLanguages, addRecentLanguage } from "./utils/languageStorage";
 import { SavedSidebar, type SavedSidebarRef } from "./components/SavedSidebar";
 import {
-  ModelSelector,
   getSavedModelId,
   type ModelStatus,
 } from "./components/ModelSelector";
@@ -16,7 +15,6 @@ import {
   DEBOUNCE_DELAY,
   LS_SOURCE_LANGS_KEY,
   LS_TARGET_LANGS_KEY,
-  LS_SELECTED_MODEL_KEY,
 } from "./utils/constants";
 import {
   LanguagesIcon,
@@ -25,7 +23,11 @@ import {
   CpuIcon,
 } from "./components/icons";
 
-export function TranslatorApp() {
+interface TranslatorAppProps {
+  onChangeModel: () => void;
+}
+
+export function TranslatorApp({ onChangeModel }: TranslatorAppProps) {
   const [inputText, setInputText] = useState("");
   const [translatedText, setTranslatedText] = useState("");
   const [languages, setLanguages] = useState<Language[]>([]);
@@ -37,9 +39,8 @@ export function TranslatorApp() {
   const [showSavedSidebar, setShowSavedSidebar] = useState(false);
   const [isStarred, setIsStarred] = useState(false);
   const [starredItemId, setStarredItemId] = useState<string | null>(null);
-  const [selectedModelId, setSelectedModelId] = useState(getSavedModelId());
+  const [selectedModelId] = useState(getSavedModelId());
   const [modelStatus, setModelStatus] = useState<ModelStatus | null>(null);
-  const [showModelSelector, setShowModelSelector] = useState(false);
   const savedSidebarRef = useRef<SavedSidebarRef>(null);
   const abortControllerRef = useRef<AbortController | null>(null);
   const starCheckControllerRef = useRef<AbortController | null>(null);
@@ -444,15 +445,6 @@ export function TranslatorApp() {
     setTranslatedText(item.translatedText);
   };
 
-  const handleModelChange = (modelId: string) => {
-    setSelectedModelId(modelId);
-    localStorage.setItem(LS_SELECTED_MODEL_KEY, modelId);
-    fetch(`${API_BASE_URL}/model/status?model_id=${modelId}`)
-      .then((res) => res.json())
-      .then((data) => setModelStatus(data))
-      .catch(console.error);
-  };
-
   const getLanguageName = (code: string) => {
     return languages.find((l) => l.code === code)?.name || code;
   };
@@ -472,7 +464,7 @@ export function TranslatorApp() {
             </div>
             <button
               type="button"
-              onClick={() => setShowModelSelector(!showModelSelector)}
+              onClick={onChangeModel}
               className="flex items-center gap-2 px-3 py-1.5 text-sm text-zinc-600 hover:text-zinc-900 hover:bg-zinc-100 rounded-lg transition-colors"
             >
               <CpuIcon className="w-4 h-4" />
@@ -481,33 +473,6 @@ export function TranslatorApp() {
               </span>
             </button>
           </header>
-
-          {showModelSelector && (
-            <div className="mb-6 p-4 bg-zinc-50 rounded-lg border border-zinc-200">
-              <div className="flex items-center justify-between mb-3">
-                <h3 className="text-sm font-medium text-zinc-700">
-                  Select Translation Model
-                </h3>
-                <button
-                  type="button"
-                  onClick={() => setShowModelSelector(false)}
-                  className="text-zinc-500 hover:text-zinc-700"
-                >
-                  &times;
-                </button>
-              </div>
-              <ModelSelector
-                selectedModelId={selectedModelId}
-                onModelChange={handleModelChange}
-                onDownloadComplete={() => {
-                  fetch(`${API_BASE_URL}/model/status?model_id=${selectedModelId}`)
-                    .then((res) => res.json())
-                    .then((data) => setModelStatus(data))
-                    .catch(console.error);
-                }}
-              />
-            </div>
-          )}
 
           {!modelStatus?.is_downloaded && (
             <div className="mb-4 p-4 bg-amber-50 border border-amber-200 text-amber-800 rounded-lg">

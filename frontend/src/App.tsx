@@ -45,7 +45,7 @@ function App() {
     return <OnboardingScreen onComplete={handleOnboardingComplete} />;
   }
 
-  return <TranslatorApp />;
+  return <TranslatorApp onChangeModel={() => setAppState("onboarding")} />;
 }
 
 export default App;
